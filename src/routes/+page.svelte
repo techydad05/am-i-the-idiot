@@ -7,7 +7,7 @@
 
   let { data } = $props();
   
-  let step = $state('intro-1'); // intro-1, intro-2, intro-3, quiz, result
+  let step = $state('intro-1'); // intro-1, intro-2, intro-3, intro-4, quiz, result
   let currentQuestionIndex = $state(0);
   let score = $state(0);
   let selectedOption = $state<number | null>(null);
@@ -27,6 +27,7 @@
   function nextIntro() {
     if (step === 'intro-1') step = 'intro-2';
     else if (step === 'intro-2') step = 'intro-3';
+    else if (step === 'intro-3') step = 'intro-4';
   }
 
   function handleOptionSelect(index: number) {
@@ -99,10 +100,10 @@
 
 <!-- Layer 4: The Content (Top layer) -->
 <div class="h-screen w-full text-slate-100 font-sans selection:bg-red-500 selection:text-white p-4 md:p-8 relative z-10 overflow-hidden flex items-center justify-center">
-  <div class="max-w-2xl w-full mx-auto">
+  <div class="max-w-2xl w-full mx-auto h-full max-h-[90vh] flex flex-col">
     
     {#if step === 'intro-1'}
-      <div in:fade class="space-y-8 text-center">
+      <div in:fade class="flex flex-col h-full justify-center space-y-8 text-center">
         <h1 class="text-6xl md:text-8xl font-black tracking-tighter text-white uppercase italic">
           Am I <span class="text-red-600">The Idiot?</span>
         </h1>
@@ -137,9 +138,38 @@
       </div>
 
     {:else if step === 'intro-2'}
-      <div in:fade class="space-y-8 text-center">
+      <div in:fade class="flex flex-col h-full justify-center space-y-8 text-center">
         <h2 class="text-4xl md:text-6xl font-black tracking-tighter text-white uppercase italic">
-          The Cost of <span class="text-red-600">Silence</span>
+          The <span class="text-red-600">Cost</span> of Apathy
+        </h2>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-left">
+          <div class="p-4 bg-red-900/20 border border-red-900/50 rounded-xl">
+            <p class="text-red-400 font-bold mb-1">Financial Cost</p>
+            <p class="text-sm text-slate-400">Not knowing how government works = paying more taxes through inefficiency.</p>
+          </div>
+          <div class="p-4 bg-red-900/20 border border-red-900/50 rounded-xl">
+            <p class="text-red-400 font-bold mb-1">Corporate Rule</p>
+            <p class="text-sm text-slate-400">Not voting = letting corporations decide your healthcare and environment.</p>
+          </div>
+          <div class="p-4 bg-red-900/20 border border-red-900/50 rounded-xl">
+            <p class="text-red-400 font-bold mb-1">Intellectual Decay</p>
+            <p class="text-sm text-slate-400">Believing fake news = allowing your children to grow up uninformed.</p>
+          </div>
+        </div>
+
+        <button 
+          onclick={nextIntro}
+          class="px-8 py-3 bg-slate-100 text-slate-900 font-black uppercase tracking-widest rounded-xl transition-all hover:bg-white"
+        >
+          The Damage →
+        </button>
+      </div>
+
+    {:else if step === 'intro-3'}
+      <div in:fade class="flex flex-col h-full justify-center space-y-8 text-center">
+        <h2 class="text-4xl md:text-6xl font-black tracking-tighter text-white uppercase italic">
+          The <span class="text-red-600">Damage</span>
         </h2>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-left">
@@ -185,31 +215,16 @@
           onclick={nextIntro}
           class="px-8 py-3 bg-slate-100 text-slate-900 font-black uppercase tracking-widest rounded-xl transition-all hover:bg-white"
         >
-          See the Consequences →
+          Are You One of Them? →
         </button>
       </div>
 
-    {:else if step === 'intro-3'}
-      <div in:fade class="space-y-8 text-center">
+    {:else if step === 'intro-4'}
+      <div in:fade class="flex flex-col h-full justify-center space-y-8 text-center">
         <h2 class="text-4xl md:text-6xl font-black tracking-tighter text-white uppercase italic">
           Are <span class="text-red-600">You</span> One of Them?
         </h2>
         
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-left">
-          <div class="p-4 bg-red-900/20 border border-red-900/50 rounded-xl">
-            <p class="text-red-400 font-bold mb-1">Financial Cost</p>
-            <p class="text-sm text-slate-400">Not knowing how government works = paying more taxes through inefficiency.</p>
-          </div>
-          <div class="p-4 bg-red-900/20 border border-red-900/50 rounded-xl">
-            <p class="text-red-400 font-bold mb-1">Corporate Rule</p>
-            <p class="text-sm text-slate-400">Not voting = letting corporations decide your healthcare and environment.</p>
-          </div>
-          <div class="p-4 bg-red-900/20 border border-red-900/50 rounded-xl">
-            <p class="text-red-400 font-bold mb-1">Intellectual Decay</p>
-            <p class="text-sm text-slate-400">Believing fake news = allowing your children to grow up uninformed.</p>
-          </div>
-        </div>
-
         <div class="flex flex-col items-center space-y-4">
           <input 
             type="text" 
