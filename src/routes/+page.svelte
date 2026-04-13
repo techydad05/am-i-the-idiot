@@ -7,7 +7,7 @@
 
   let { data } = $props();
   
-  let step = $state('landing'); // landing, quiz, result
+  let step = $state('intro-1'); // intro-1, intro-2, intro-3, quiz, result
   let currentQuestionIndex = $state(0);
   let score = $state(0);
   let selectedOption = $state<number | null>(null);
@@ -22,6 +22,11 @@
       return;
     }
     step = 'quiz';
+  }
+
+  function nextIntro() {
+    if (step === 'intro-1') step = 'intro-2';
+    else if (step === 'intro-2') step = 'intro-3';
   }
 
   function handleOptionSelect(index: number) {
@@ -71,7 +76,7 @@
   }
 
   function reset() {
-    step = 'landing';
+    step = 'intro-1';
     currentQuestionIndex = 0;
     score = 0;
     selectedOption = null;
@@ -93,10 +98,10 @@
 <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-[2px] -z-10"></div>
 
 <!-- Layer 4: The Content (Top layer) -->
-<div class="min-h-screen text-slate-100 font-sans selection:bg-red-500 selection:text-white p-4 md:p-8 relative z-10">
-  <div class="max-w-2xl mx-auto">
+<div class="h-screen w-full text-slate-100 font-sans selection:bg-red-500 selection:text-white p-4 md:p-8 relative z-10 overflow-hidden flex items-center justify-center">
+  <div class="max-w-2xl w-full mx-auto">
     
-    {#if step === 'landing'}
+    {#if step === 'intro-1'}
       <div in:fade class="space-y-8 text-center">
         <h1 class="text-6xl md:text-8xl font-black tracking-tighter text-white uppercase italic">
           Am I <span class="text-red-600">The Idiot?</span>
@@ -115,13 +120,81 @@
               To the Greeks, the real "idiot" was the person who thought they were above the responsibilities 
               of citizenship. They didn't hate the ignorant; they hated the <span class="text-red-400 font-bold">disengaged</span>.
             </p>
-            <p class="text-slate-300 italic">
-              Modern society has forgotten this. We use the word as a generic insult, while we collectively 
-              become exactly what the Greeks feared: a population of disengaged "idiots".
+          </div>
+        </div>
+
+        <!-- Placeholder for Greek Animation -->
+        <div class="aspect-video w-full bg-slate-800/50 border-2 border-dashed border-slate-700 rounded-2xl flex items-center justify-center text-slate-500 italic">
+          [Animation: Visualizing the Greek Agora vs the isolated "Idios"]
+        </div>
+
+        <button 
+          onclick={nextIntro}
+          class="px-8 py-3 bg-slate-100 text-slate-900 font-black uppercase tracking-widest rounded-xl transition-all hover:bg-white"
+        >
+          Continue →
+        </button>
+      </div>
+
+    {:else if step === 'intro-2'}
+      <div in:fade class="space-y-8 text-center">
+        <h2 class="text-4xl md:text-6xl font-black tracking-tighter text-white uppercase italic">
+          The Cost of <span class="text-red-600">Silence</span>
+        </h2>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-left">
+          <div class="p-6 bg-slate-800 border border-slate-700 rounded-2xl shadow-xl space-y-3">
+            <p class="text-red-400 font-black text-xl uppercase italic">The Erosion of Power</p>
+            <p class="text-slate-400 leading-relaxed">
+              When citizens stop participating, power doesn't disappear—it just concentrates. 
+              Local governance becomes a playground for the few, while the many pay the price in decaying 
+              infrastructure and skewed laws.
+            </p>
+          </div>
+          <div class="p-6 bg-slate-800 border border-slate-700 rounded-2xl shadow-xl space-y-3">
+            <p class="text-red-400 font-black text-xl uppercase italic">The Rise of Noise</p>
+            <p class="text-slate-400 leading-relaxed">
+              Civic vacuum is filled by polarization. Without a broad base of engaged citizens, 
+              politics becomes a performance for the extremes, leaving the moderate and the 
+              rational invisible and voiceless.
+            </p>
+          </div>
+          <div class="p-6 bg-slate-800 border border-slate-700 rounded-2xl shadow-xl space-y-3">
+            <p class="text-red-400 font-black text-xl uppercase italic">From Citizen to Consumer</p>
+            <p class="text-slate-400 leading-relaxed">
+              We have traded the duty of citizenship for the convenience of consumption. 
+              We expect "services" from our government rather than exercising "authority" over it.
+            </p>
+          </div>
+          <div class="p-6 bg-slate-800 border border-slate-700 rounded-2xl shadow-xl space-y-3">
+            <p class="text-red-400 font-black text-xl uppercase italic">The Legacy of Apathy</p>
+            <p class="text-slate-400 leading-relaxed">
+              The ultimate tragedy isn't that we are governed by idiots, but that we've become 
+              the "idios" ourselves—private individuals watching the world burn from a safe, 
+              disengaged distance.
             </p>
           </div>
         </div>
 
+        <!-- Placeholder for American Society Imagery -->
+        <div class="aspect-video w-full bg-slate-800/50 border-2 border-dashed border-slate-700 rounded-2xl flex items-center justify-center text-slate-500 italic">
+          [Visual: Montage of civic decay vs active engagement]
+        </div>
+
+        <button 
+          onclick={nextIntro}
+          class="px-8 py-3 bg-slate-100 text-slate-900 font-black uppercase tracking-widest rounded-xl transition-all hover:bg-white"
+        >
+          See the Consequences →
+        </button>
+      </div>
+
+    {:else if step === 'intro-3'}
+      <div in:fade class="space-y-8 text-center">
+        <h2 class="text-4xl md:text-6xl font-black tracking-tighter text-white uppercase italic">
+          Are <span class="text-red-600">You</span> One of Them?
+        </h2>
+        
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-left">
           <div class="p-4 bg-red-900/20 border border-red-900/50 rounded-xl">
             <p class="text-red-400 font-bold mb-1">Financial Cost</p>
