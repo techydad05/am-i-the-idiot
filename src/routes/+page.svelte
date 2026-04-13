@@ -14,7 +14,7 @@
   let isWrong = $state(false);
   let userName = $state('');
   let finalFeedback = $state<{ message: string; class: string } | null>(null);
-  let highScores = $state(data.highScores);
+  let highScores = $derived(data.highScores);
 
   async function startQuiz() {
     if (!userName.trim()) {
@@ -82,9 +82,18 @@
 </script>
 
 <Alerts />
+
+<!-- Layer 1: The Absolute Bottom (Opaque base color) -->
+<div class="fixed inset-0 bg-slate-900 -z-30"></div>
+
+<!-- Layer 2: The Word Cloud (Now behind the overlay) -->
 <BackgroundCanvas />
 
-<div class="min-h-screen bg-slate-900 text-slate-100 font-sans selection:bg-red-500 selection:text-white p-4 md:p-8 relative z-10">
+<!-- Layer 3: The Semi-Transparent Blue Overlay (Mutes the words) -->
+<div class="fixed inset-0 bg-slate-900/60 backdrop-blur-[2px] -z-10"></div>
+
+<!-- Layer 4: The Content (Top layer) -->
+<div class="min-h-screen text-slate-100 font-sans selection:bg-red-500 selection:text-white p-4 md:p-8 relative z-10">
   <div class="max-w-2xl mx-auto">
     
     {#if step === 'landing'}

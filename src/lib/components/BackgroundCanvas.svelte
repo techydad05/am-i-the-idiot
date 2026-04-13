@@ -1,136 +1,162 @@
 <script lang="ts">
   import { onMount } from 'svelte';
 
-  let canvas: HTMLCanvasElement;
-  let width = 0;
-  let height = 0;
-  let mouse = { x: -1000, y: -1000 };
+  const definition = "In ancient Greece, an 'idios' wasn't someone who was stupid. It was a private citizen—someone who chose to avoid the civic duties of their community. To the Greeks, the real 'idiot' was the person who thought they were above the responsibilities of citizenship. They didn't hate the ignorant; they hated the disengaged.";
+  
+  const keywords = ["idios", "private", "citizen", "civic", "duties", "responsibilities", "citizenship", "disengaged", "ignorant"];
+  
+  const wordList = definition.toLowerCase().replace(/[.,'—]/g, '').split(/\s+/);
 
-  const words = [
-    "idios", "private", "disengaged", "citizen", "civic duty", 
-    "ignorance", "polis", "democracy", "uninformed", "shame", 
-    "accountability", "uninformed", "passive", "avoidance", "civics"
-  ];
-
-  class Word {
+  type Particle = {
+    text: string;
     x: number;
     y: number;
     originX: number;
     originY: number;
-    vx: number = 0;
-    vy: number = 0;
-    text: string;
     size: number;
     opacity: number;
+    vx: number;
+    vy: number;
+  };
 
-    constructor(text: string, x: number, y: number, size: number) {
-      this.text = text;
-      this.x = x;
-      this.y = y;
-      this.originX = x;
-      this.originY = y;
-      this.size = size;
-      this.opacity = Math.random() * 0.3 + 0.1;
-    }
+  let particles = $state<Particle[]>([]);
+  let mouse = $state({ x: -1000, y: -1000 });
+  let containerWidth = $state(0);
+  let containerHeight = $state(0);
 
-    update(mouseX: number, mouseY: number) {
-      // Repulsion logic
-      const dx = this.x - mouseX;
-      const dy = this.y - mouseY;
-      const dist = Math.sqrt(dx * dx + dy * dy);
-      const forceRange = 200;
+  function init() {
+    if (containerWidth === 0 || containerHeight === 0) return;
+    
+    const newParticles: Particle[] = [];
+    const totalWordsNeeded = 100; 
+    
+    for (let i = 0; i < totalWordsNeeded; i++) {
+      const word = wordList[i % wordList.length];
+      let size = Math.random() * 15 + 12;
+      if (keywords.includes(word)) {
+        size = Math.random() * 30 + 30;
+      }
+
+      let x = 0;
+      let y = 0;
+      let placed = false;
+      let attempts = 0;
+      const maxAttempts = 50;
+
+      while (!placed && attempts < maxAttempts) {
+        x = Math.random() * containerWidth;
+        y = Math.random() * containerHeight;
+        
+        // Check for overlap with existing particles
+        const tooClose = newParticles.some(p => {
+          const dx = x - p.x;
+          const dy = y - p.y;
+          const distance = Math.sqrt(dx * dx + dy * dy);
+          // Minimum distance based on combined font sizes + padding
+          const minDistance = (size + p.size) * 0.8; 
+          return distance < minDistance;
+        });
+
+        if (!tooClose) {
+          placed = true;
+        }
+        attempts++;
+      }
       
+      newParticles.push({
+        text: word,
+        x,
+        y,
+        originX: x,
+        originY: y,
+        size,
+        opacity: Math.random() * 0.4 + 0.4,
+        vx: 0,
+        vy: 0
+      });
+    }
+    particles = newParticles;
+  }
+
+  function updateParticles() {
+    if (particles.length === 0) return;
+    
+    particles = particles.map(p => {
+      const dx = p.x - mouse.x;
+      const dy = p.y - mouse.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      const forceRange = 250;
+      
+      let vx = p.vx;
+      let vy = p.vy;
+
       if (dist < forceRange) {
         const force = (forceRange - dist) / forceRange;
         const angle = Math.atan2(dy, dx);
-        this.vx += Math.cos(angle) * force * 2;
-        this.vy += Math.sin(angle) * force * 2;
+        vx += Math.cos(angle) * force * 3;
+        vy += Math.sin(angle) * force * 3;
       }
 
-      // Return to origin logic
-      const ox = this.originX - this.x;
-      const oy = this.originY - this.y;
-      this.vx += ox * 0.01;
-      this.vy += oy * 0.01;
+      vx += (p.originX - p.x) * 0.02;
+      vy += (p.originY - p.y) * 0.02;
+      vx *= 0.9;
+      vy *= 0.9;
 
-      // Friction
-      this.vx *= 0.9;
-      this.vy *= 0.9;
-
-      this.x += this.vx;
-      this.y += this.vy;
-    }
-
-    draw(ctx: CanvasRenderingContext2D) {
-      ctx.font = `${this.size}px Inter, sans-serif`;
-      ctx.fillStyle = `rgba(148, 163, 184, ${this.opacity})`;
-      ctx.fillText(this.text, this.x, this.y);
-    }
-  }
-
-  let particles: Word[] = [];
-
-  function init() {
-    particles = [];
-    for (let i = 0; i < 60; i++) {
-      const text = words[Math.floor(Math.random() * words.length)];
-      const x = Math.random() * width;
-      const y = Math.random() * height;
-      const size = Math.random() * 20 + 12;
-      particles.push(new Word(text, x, y, size));
-    }
-  }
-
-  function animate() {
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    ctx.clearRect(0, 0, width, height);
-    
-    particles.forEach(p => {
-      p.update(mouse.x, mouse.y);
-      p.draw(ctx);
+      return {
+        ...p,
+        x: p.x + vx,
+        y: p.y + vy,
+        vx,
+        vy
+      };
     });
-
-    requestAnimationFrame(animate);
   }
 
   function handleMouseMove(e: MouseEvent) {
-    const rect = canvas.getBoundingClientRect();
+    const rect = canvasDiv.getBoundingClientRect();
     mouse.x = e.clientX - rect.left;
     mouse.y = e.clientY - rect.top;
   }
 
-  function handleResize() {
-    width = window.innerWidth;
-    height = window.innerHeight;
-    if (canvas) {
-      canvas.width = width;
-      canvas.height = height;
-    }
-    init();
-  }
+  let canvasDiv: HTMLDivElement;
 
   onMount(() => {
-    handleResize();
-    window.addEventListener('resize', handleResize);
     window.addEventListener('mousemove', handleMouseMove);
-    animate();
+    const interval = setInterval(updateParticles, 16);
     return () => {
-      window.removeEventListener('resize', handleResize);
       window.removeEventListener('mousemove', handleMouseMove);
+      clearInterval(interval);
     };
+  });
+
+  $effect(() => {
+    if (containerWidth > 0 && containerHeight > 0) {
+      init();
+    }
   });
 </script>
 
-<canvas 
-  bind:this={canvas} 
-  class="fixed inset-0 pointer-events-none z-0"
-></canvas>
-
-<style>
-  canvas {
-    background: transparent;
-  }
-</style>
+<div 
+  bind:this={canvasDiv}
+  bind:clientWidth={containerWidth} 
+  bind:clientHeight={containerHeight}
+  class="absolute inset-0 pointer-events-none -z-10 overflow-hidden"
+>
+  {#each particles as p}
+    <span 
+      class="absolute whitespace-nowrap transition-transform duration-75 ease-out"
+      style="
+        left: {p.x}px; 
+        top: {p.y}px; 
+        font-size: {p.size}px; 
+        color: #FFFFFF;
+        opacity: {p.opacity};
+        font-family: sans-serif;
+        font-weight: {p.size > 30 ? 'bold' : 'normal'};
+        transform: translate(-50%, -50%);
+      "
+    >
+      {p.text}
+    </span>
+  {/each}
+</div>
