@@ -7,7 +7,7 @@
 
   let { data } = $props();
   
-  let step = $state('intro-1'); // intro-1, intro-2, intro-3, intro-4, quiz, result
+  let step = $state('landing'); // landing, quiz, result
   let currentQuestionIndex = $state(0);
   let score = $state(0);
   let selectedOption = $state<number | null>(null);
@@ -22,12 +22,6 @@
       return;
     }
     step = 'quiz';
-  }
-
-  function nextIntro() {
-    if (step === 'intro-1') step = 'intro-2';
-    else if (step === 'intro-2') step = 'intro-3';
-    else if (step === 'intro-3') step = 'intro-4';
   }
 
   function handleOptionSelect(index: number) {
@@ -62,22 +56,22 @@
     const formData = new FormData();
     formData.append('name', userName);
     formData.append('score', score.toString());
-
+    
     const response = await fetch('?/saveScore', {
       method: 'POST',
       body: formData
     });
-
+    
     if (response.ok) {
       alerts.trigger("Your shame (or glory) has been recorded.", 'info');
       window.location.reload(); 
     }
-
+    
     step = 'result';
   }
 
   function reset() {
-    step = 'intro-1';
+    step = 'landing';
     currentQuestionIndex = 0;
     score = 0;
     selectedOption = null;
@@ -96,162 +90,106 @@
 <BackgroundCanvas />
 
 <!-- Layer 3: The Semi-Transparent Blue Overlay (Mutes the words) -->
-<div class="fixed inset-0 bg-slate-900/60 backdrop-blur-[2px] -z-10"></div>
+<div class="fixed inset-0 bg-slate-900/40 backdrop-blur-[2px] -z-10"></div>
 
 <!-- Layer 4: The Content (Top layer) -->
-<div class="min-h-screen w-full text-slate-900 font-sans selection:bg-red-500 selection:text-white p-4 md:p-8 relative z-10 flex items-center justify-center">
-  <div class="max-w-3xl w-full mx-auto bg-white border-4 border-black shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] rounded-none overflow-hidden flex flex-col max-h-[90vh]">
+<div class="h-dvh overflow-hidden flex items-center justify-center text-slate-100 font-sans selection:bg-red-500 selection:text-white p-3 md:p-8 relative z-10">
+  <div class="max-w-2xl mx-auto w-full">
     
-    <!-- Inner Scrollable Area -->
-    <div class="overflow-y-auto p-6 md:p-10 custom-scrollbar">
-      
-      {#if step === 'intro-1'}
-        <div in:fade class="space-y-8 text-center">
-          <h1 class="text-5xl md:text-7xl font-black tracking-tighter text-black uppercase italic leading-none">
-            Am I <span class="bg-red-600 text-white px-2">The Idiot?</span>
-          </h1>
-          
-          <div class="relative p-6 bg-slate-100 border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] text-left space-y-4">
-            <p class="font-black text-black text-2xl uppercase italic">The Shocking Truth</p>
-            <p class="text-lg text-slate-700 leading-tight">
-              In ancient Greece, an <span class="font-mono font-bold underline decoration-red-600">"idios"</span> wasn't someone who was stupid. 
-              It was a <span class="font-bold text-black">private citizen</span>—someone who chose to avoid the civic duties 
+    {#if step === 'landing'}
+      <div in:fade class="space-y-6 text-center">
+        <h1 in:fly={{ y: -20, duration: 600 }} class="text-4xl sm:text-5xl md:text-8xl font-black tracking-tighter text-white uppercase italic">
+          Am I <span class="text-red-600">The Idiot?</span>
+        </h1>
+        
+        <div in:fly={{ y: 20, duration: 600, delay: 100 }} class="relative group">
+          <div class="absolute -inset-1 bg-gradient-to-r from-red-600 to-orange-600 rounded-2xl blur opacity-25 group-hover:opacity-50 transition duration-1000 group-hover:duration-200"></div>
+          <div class="relative space-y-3 text-base text-slate-400 text-left bg-slate-800/80 backdrop-blur p-6 rounded-2xl border border-slate-700/80 shadow-xl group-hover:border-red-600/50 transition-colors duration-500">
+            <p class="font-bold text-white text-xl group-hover:text-red-100 transition-colors duration-300">The Shocking Truth About "Idiots"</p>
+            <p>
+              In ancient Greece, an <span class="text-white font-mono">"idios"</span> wasn't someone who was stupid. 
+              It was a <span class="text-white font-bold">private citizen</span>—someone who chose to avoid the civic duties 
               of their community. 
             </p>
-            <p class="text-lg text-slate-700 leading-tight">
+            <p>
               To the Greeks, the real "idiot" was the person who thought they were above the responsibilities 
-              of citizenship. They didn't hate the ignorant; they hated the <span class="text-red-600 font-black uppercase">disengaged</span>.
+              of citizenship. They didn't hate the ignorant; they hated the <span class="text-red-400 font-bold">disengaged</span>.
+            </p>
+            <p class="text-slate-300 italic text-sm">
+              Modern society has forgotten this. We use the word as a generic insult, while we collectively 
+              become exactly what the Greeks feared: a population of disengaged "idiots".
             </p>
           </div>
-
-          <!-- Placeholder for Greek Animation -->
-          <div class="aspect-video w-full bg-slate-200 border-4 border-black rounded-none flex items-center justify-center text-slate-500 italic font-bold uppercase tracking-tighter">
-            [Animation: Visualizing the Greek Agora vs the isolated "Idios"]
-          </div>
-
-          <button 
-            onclick={nextIntro}
-            class="px-8 py-4 bg-red-600 text-white font-black uppercase tracking-widest rounded-none border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all hover:translate-x-1 hover:translate-y-1 hover:shadow-none"
-          >
-            Continue →
-          </button>
         </div>
 
-      {:else if step === 'intro-2'}
-        <div in:fade class="space-y-8 text-center">
-          <h2 class="text-4xl md:text-6xl font-black tracking-tighter text-black uppercase italic leading-none">
-            The <span class="bg-red-600 text-white px-2">Cost</span> of Apathy
-          </h2>
-
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-left">
-            <div class="p-4 bg-yellow-300 border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-              <p class="text-black font-black text-lg uppercase italic mb-2">Financial Cost</p>
-              <p class="text-sm text-black font-medium leading-tight">Not knowing how government works = paying more taxes through inefficiency.</p>
-            </div>
-            <div class="p-4 bg-blue-300 border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-              <p class="text-black font-black text-lg uppercase italic mb-2">Corporate Rule</p>
-              <p class="text-sm text-black font-medium leading-tight">Not voting = letting corporations decide your healthcare and environment.</p>
-            </div>
-            <div class="p-4 bg-green-300 border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-              <p class="text-black font-black text-lg uppercase italic mb-2">Intellectual Decay</p>
-              <p class="text-sm text-black font-medium leading-tight">Believing fake news = allowing your children to grow up uninformed.</p>
+        <div in:fly={{ y: 20, duration: 600, delay: 200 }} class="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-6 text-left">
+          <div class="group relative p-4 md:p-6 bg-gradient-to-br from-red-900/30 to-red-950/50 border border-red-800/50 rounded-2xl cursor-pointer transition-all duration-500 hover:scale-105 hover:border-red-500/80 hover:shadow-2xl hover:shadow-red-900/40 hover:from-red-800/40 hover:to-red-950/60">
+            <div class="absolute inset-0 bg-gradient-to-r from-red-600/0 via-red-600/5 to-red-600/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-2xl"></div>
+            <div class="relative">
+              <div class="flex items-center gap-2 md:gap-3 mb-2 md:mb-3">
+                <div class="w-8 h-8 md:w-10 md:h-10 rounded-xl bg-red-600/20 flex items-center justify-center group-hover:bg-red-500/30 group-hover:scale-110 transition-all duration-300">
+                  <svg class="w-5 h-5 text-red-400 group-hover:text-red-300 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                </div>
+                <p class="text-red-400 font-bold text-sm md:text-lg group-hover:text-red-300 transition-colors duration-300">Financial Cost</p>
+              </div>
+              <p class="text-xs md:text-sm text-slate-400 leading-relaxed group-hover:text-slate-300 transition-colors duration-300">Not knowing how government works = paying more taxes through inefficiency.</p>
             </div>
           </div>
 
-          <button 
-            onclick={nextIntro}
-            class="px-8 py-4 bg-red-600 text-white font-black uppercase tracking-widest rounded-none border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all hover:translate-x-1 hover:translate-y-1 hover:shadow-none"
-          >
-            The Damage →
-          </button>
+          <div class="group relative p-4 md:p-6 bg-gradient-to-br from-red-900/30 to-red-950/50 border border-red-800/50 rounded-2xl cursor-pointer transition-all duration-500 hover:scale-105 hover:border-red-500/80 hover:shadow-2xl hover:shadow-red-900/40 hover:from-red-800/40 hover:to-red-950/60">
+            <div class="absolute inset-0 bg-gradient-to-r from-red-600/0 via-red-600/5 to-red-600/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-2xl"></div>
+            <div class="relative">
+              <div class="flex items-center gap-2 md:gap-3 mb-2 md:mb-3">
+                <div class="w-8 h-8 md:w-10 md:h-10 rounded-xl bg-red-600/20 flex items-center justify-center group-hover:bg-red-500/30 group-hover:scale-110 transition-all duration-300">
+                  <svg class="w-5 h-5 text-red-400 group-hover:text-red-300 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
+                </div>
+                <p class="text-red-400 font-bold text-sm md:text-lg group-hover:text-red-300 transition-colors duration-300">Corporate Rule</p>
+              </div>
+              <p class="text-xs md:text-sm text-slate-400 leading-relaxed group-hover:text-slate-300 transition-colors duration-300">Not voting = letting corporations decide your healthcare and environment.</p>
+            </div>
+          </div>
+
+          <div class="group relative p-4 md:p-6 bg-gradient-to-br from-red-900/30 to-red-950/50 border border-red-800/50 rounded-2xl cursor-pointer transition-all duration-500 hover:scale-105 hover:border-red-500/80 hover:shadow-2xl hover:shadow-red-900/40 hover:from-red-800/40 hover:to-red-950/60">
+            <div class="absolute inset-0 bg-gradient-to-r from-red-600/0 via-red-600/5 to-red-600/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-2xl"></div>
+            <div class="relative">
+              <div class="flex items-center gap-2 md:gap-3 mb-2 md:mb-3">
+                <div class="w-8 h-8 md:w-10 md:h-10 rounded-xl bg-red-600/20 flex items-center justify-center group-hover:bg-red-500/30 group-hover:scale-110 transition-all duration-300">
+                  <svg class="w-5 h-5 text-red-400 group-hover:text-red-300 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path></svg>
+                </div>
+                <p class="text-red-400 font-bold text-sm md:text-lg group-hover:text-red-300 transition-colors duration-300">Intellectual Decay</p>
+              </div>
+              <p class="text-xs md:text-sm text-slate-400 leading-relaxed group-hover:text-slate-300 transition-colors duration-300">Believing fake news = allowing your children to grow up uninformed.</p>
+            </div>
+          </div>
         </div>
 
-      {:else if step === 'intro-3'}
-        <div in:fade class="space-y-8 text-center">
-          <h2 class="text-4xl md:text-6xl font-black tracking-tighter text-black uppercase italic leading-none">
-            The <span class="bg-red-600 text-white px-2">Damage</span>
-          </h2>
-
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-left">
-            <div class="p-6 bg-white border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] space-y-3">
-              <p class="text-red-600 font-black text-xl uppercase italic">The Erosion of Power</p>
-              <p class="text-slate-700 leading-tight font-medium">
-                When citizens stop participating, power doesn't disappear—it just concentrates. 
-                Local governance becomes a playground for the few, while the many pay the price in decaying 
-                infrastructure and skewed laws.
-              </p>
-            </div>
-            <div class="p-6 bg-white border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] space-y-3">
-              <p class="text-red-600 font-black text-xl uppercase italic">The Rise of Noise</p>
-              <p class="text-slate-700 leading-tight font-medium">
-                Civic vacuum is filled by polarization. Without a broad base of engaged citizens, 
-                politics becomes a performance for the extremes, leaving the moderate and the 
-                rational invisible and voiceless.
-              </p>
-            </div>
-            <div class="p-6 bg-white border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] space-y-3">
-              <p class="text-red-600 font-black text-xl uppercase italic">From Citizen to Consumer</p>
-              <p class="text-slate-700 leading-tight font-medium">
-                We have traded the duty of citizenship for the convenience of consumption. 
-                We expect "services" from our government rather than exercising "authority" over it.
-              </p>
-            </div>
-            <div class="p-6 bg-white border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] space-y-3">
-              <p class="text-red-600 font-black text-xl uppercase italic">The Legacy of Apathy</p>
-              <p class="text-slate-700 leading-tight font-medium">
-                The ultimate tragedy isn't that we are governed by idiots, but that we've become 
-                the "idios" ourselves—private individuals watching the world burn from a safe, 
-                disengaged distance.
-              </p>
-            </div>
-          </div>
-
-          <!-- Placeholder for American Society Imagery -->
-          <div class="aspect-video w-full bg-slate-200 border-4 border-black rounded-none flex items-center justify-center text-slate-600 italic font-bold uppercase tracking-tighter">
-            [Visual: Montage of civic decay vs active engagement]
-          </div>
-
+        <div in:fly={{ y: 20, duration: 600, delay: 300 }} class="flex flex-col sm:flex-row items-center justify-center gap-3">
+          <input 
+            type="text" 
+            bind:value={userName} 
+            placeholder="Enter your real name..." 
+            class="w-full max-w-xs p-3 md:p-4 bg-slate-800/80 border-2 border-slate-700/80 rounded-xl text-white text-center focus:border-red-500 outline-none transition-all duration-300 hover:border-slate-600 focus:shadow-lg focus:shadow-red-900/20"
+          />
           <button 
-            onclick={nextIntro}
-            class="px-8 py-4 bg-red-600 text-white font-black uppercase tracking-widest rounded-none border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all hover:translate-x-1 hover:translate-y-1 hover:shadow-none"
+            onclick={startQuiz}
+            class="px-4 py-3 md:px-6 md:py-4 bg-gradient-to-r from-red-600 to-red-500 hover:from-red-500 hover:to-red-400 text-white font-black text-base md:text-lg uppercase tracking-widest rounded-xl transition-all transform hover:scale-105 active:scale-95 shadow-lg shadow-red-900/30 whitespace-nowrap hover:shadow-red-900/50"
           >
-            Are You One of Them? →
-          </button>
-        </div>
-
-      {:else if step === 'intro-4'}
-        <div in:fade class="flex flex-col h-full justify-center space-y-8 text-center">
-          <h2 class="text-4xl md:text-6xl font-black tracking-tighter text-black uppercase italic leading-none">
-            Are <span class="bg-red-600 text-white px-2">You</span> One of Them?
-          </h2>
-          
-          <div class="flex flex-col items-center space-y-4">
-            <input 
-              type="text" 
-              bind:value={userName} 
-              placeholder="Enter your real name..." 
-              class="w-full max-w-sm p-4 bg-white border-4 border-black text-black text-center font-bold focus:bg-yellow-100 outline-none transition-all shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
-            />
-            <button 
-              onclick={startQuiz}
-              class="px-8 py-4 bg-red-600 text-white font-black text-xl uppercase tracking-widest rounded-none border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all transform hover:translate-x-1 hover:translate-y-1 hover:shadow-none"
-            >
             Test My Intelligence
           </button>
-          </div>
+        </div>
+      </div>
+
+    {:else if step === 'quiz'}
+      <div in:fly={{ y: 20 }} class="space-y-8">
+        <div class="flex justify-between items-end">
+          <span class="text-slate-500 font-mono">Question {currentQuestionIndex + 1}/{civicsQuiz.length}</span>
+          <span class="text-slate-500 font-mono">Score: {score}</span>
         </div>
 
-      {:else if step === 'quiz'}
-        <div in:fly={{ y: 20 }} class="space-y-8 text-center">
-        <div class="flex justify-between items-end font-black uppercase">
-          <span class="text-slate-600">Question {currentQuestionIndex + 1}/{civicsQuiz.length}</span>
-          <span class="text-slate-600">Score: {score}</span>
-        </div>
-
-        <div class="bg-white p-8 border-4 border-black shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] relative overflow-hidden text-left"
+        <div class="bg-slate-800 p-8 rounded-3xl border border-slate-700 shadow-2xl relative overflow-hidden"
              class:shake={isWrong}>
           
-          <h2 class="text-2xl md:text-3xl font-black mb-8 leading-tight text-black">
+          <h2 class="text-2xl md:text-3xl font-bold mb-8 leading-tight">
             {civicsQuiz[currentQuestionIndex].text}
           </h2>
 
@@ -260,10 +198,10 @@
               <button 
                 onclick={() => handleOptionSelect(i)}
                 disabled={selectedOption !== null}
-                class="p-4 text-left rounded-none border-4 transition-all font-bold
-                {selectedOption === null ? 'border-black hover:bg-yellow-200' : 
-                 i === civicsQuiz[currentQuestionIndex].correctAnswer ? 'border-green-500 bg-green-200 text-black' : 
-                 selectedOption === i ? 'border-red-500 bg-red-200 text-black' : 'border-slate-200 text-slate-400'}"
+                class="p-4 text-left rounded-xl border-2 transition-all font-medium
+                {selectedOption === null ? 'border-slate-700 hover:border-slate-500 hover:bg-slate-700' : 
+                 i === civicsQuiz[currentQuestionIndex].correctAnswer ? 'border-green-500 bg-green-500/10 text-green-400' : 
+                 selectedOption === i ? 'border-red-500 bg-red-500/10 text-red-400' : 'border-slate-800 text-slate-600'}"
               >
                 {option}
               </button>
@@ -271,12 +209,12 @@
           </div>
 
           {#if selectedOption !== null}
-            <div in:fade class="mt-8 p-6 bg-slate-100 border-4 border-black">
-              <p class="text-slate-600 text-sm uppercase tracking-widest mb-2 font-black">The Fact</p>
-              <p class="text-lg text-black mb-6 italic font-medium">"{civicsQuiz[currentQuestionIndex].fact}"</p>
+            <div in:fade class="mt-8 p-6 bg-slate-900 rounded-2xl border-l-4 border-red-600">
+              <p class="text-slate-400 text-sm uppercase tracking-widest mb-2 font-bold">The Fact</p>
+              <p class="text-lg text-slate-200 mb-6 italic">"{civicsQuiz[currentQuestionIndex].fact}"</p>
               <button 
                 onclick={nextQuestion}
-                class="w-full py-3 bg-red-600 text-white font-black rounded-none border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all"
+                class="w-full py-3 bg-white text-slate-900 font-bold rounded-xl hover:bg-slate-200 transition-colors"
               >
                 Continue
               </button>
@@ -288,22 +226,22 @@
     {:else if step === 'result'}
       <div in:fade class="space-y-12 text-center">
         <div class="space-y-4">
-          <h1 class="text-5xl font-black uppercase italic text-black">The Verdict</h1>
-          <div class="text-8xl font-black {finalFeedback?.class} leading-none">
+          <h1 class="text-5xl font-black uppercase italic">The Verdict</h1>
+          <div class="text-8xl font-black {finalFeedback?.class}">
             {Math.round((score / civicsQuiz.length) * 100)}%
           </div>
-          <p class="text-2xl font-black max-w-lg mx-auto {finalFeedback?.class} uppercase italic">
+          <p class="text-2xl font-medium max-w-lg mx-auto {finalFeedback?.class}">
             {finalFeedback?.message}
           </p>
         </div>
 
-        <div class="bg-white p-8 border-4 border-black shadow-[12px_12px_0px_0px_rgba(0,0,0,1)]">
-          <h3 class="text-2xl font-black mb-6 uppercase tracking-tighter text-black">Wall of Shame & Glory</h3>
+        <div class="bg-slate-800 p-8 rounded-3xl border border-slate-700 shadow-xl">
+          <h3 class="text-2xl font-bold mb-6 uppercase tracking-tighter">Wall of Shame & Glory</h3>
           <div class="space-y-3">
             {#each highScores as entry}
-              <div class="flex justify-between items-center p-3 bg-slate-100 border-2 border-black">
-                <span class="font-bold">{entry.name}</span>
-                <span class="font-mono font-black {entry.score < 3 ? 'text-red-600' : 'text-green-600'}">{entry.score}/{civicsQuiz.length}</span>
+              <div class="flex justify-between items-center p-3 bg-slate-900 rounded-lg border border-slate-700">
+                <span class="font-medium">{entry.name}</span>
+                <span class="font-mono font-bold {entry.score < 3 ? 'text-red-500' : 'text-green-500'}">{entry.score}/{civicsQuiz.length}</span>
               </div>
             {/each}
           </div>
@@ -311,7 +249,7 @@
 
         <button 
           onclick={reset}
-          class="px-8 py-4 bg-yellow-300 text-black font-black text-xl uppercase tracking-widest rounded-none border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all hover:translate-x-1 hover:translate-y-1 hover:shadow-none"
+          class="px-8 py-4 bg-slate-100 text-slate-900 font-black text-xl uppercase tracking-widest rounded-xl transition-all hover:bg-white"
         >
           Try to be less of an idiot
         </button>
@@ -330,23 +268,5 @@
     20%, 80% { transform: translate3d(2px, 0, 0); }
     30%, 70% { transform: translate3d(-4px, 0, 0); }
     40%, 60% { transform: translate3d(4px, 0, 0); }
-  }
-
-  .custom-scrollbar::-webkit-scrollbar {
-    width: 8px;
-  }
-
-  .custom-scrollbar::-webkit-scrollbar-track {
-    background: #f1f1f1;
-    border-left: 4px solid black;
-  }
-
-  .custom-scrollbar::-webkit-scrollbar-thumb {
-    background: #888;
-    border: 2px solid black;
-  }
-
-  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: #555;
   }
 </style>
