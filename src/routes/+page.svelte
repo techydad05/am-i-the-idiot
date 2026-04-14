@@ -1,18 +1,20 @@
 <script lang="ts">
-import { fade, fly } from 'svelte/transition';
-import { invalidateAll } from '$app/navigation';
-import { civicsQuiz, getFeedback } from '$lib/quiz';
+  import { fade, fly } from 'svelte/transition';
+  import { invalidateAll } from '$app/navigation';
+  import { civicsQuiz, getFeedback, CONFIDENCE_CONFIG, getQuestionsForConfidence, type ConfidenceLevel, type Question } from '$lib/quiz';
   import { alerts } from '$lib/alerts.svelte';
   import Alerts from '$lib/components/Alerts.svelte';
   import BackgroundCanvas from '$lib/components/BackgroundCanvas.svelte';
+  import { onMount } from 'svelte';
 
   let { data } = $props();
   
-  // shameState from server cookie tracker
-  // Display "I am the idiot" if they've failed and never passed
   let isShameMode = $derived(data.shameState?.failed && !data.shameState?.passed);
   
-  let step = $state('landing'); // landing, quiz, result
+  let step = $state('landing'); // landing, confidence, quiz, result
+  let confidenceLevel = $state<ConfidenceLevel | null>(null);
+  let activeQuiz = $state<Question[]>([]);
+  
   let currentQuestionIndex = $state(0);
   let score = $state(0);
   let selectedOption = $state<number | null>(null);
@@ -21,19 +23,58 @@ import { civicsQuiz, getFeedback } from '$lib/quiz';
   let finalFeedback = $state<{ message: string; class: string } | null>(null);
   let highScores = $derived(data.highScores);
 
+  // Timer state
+  let timeLeft = $state(0);
+  let timerInterval: any;
+
+  function startTimer() {
+    if (!confidenceLevel) return;
+    const limit = CONFIDENCE_CONFIG[confidenceLevel].timeLimit;
+    timeLeft = limit;
+    
+    if (timerInterval) clearInterval(timerInterval);
+    
+    timerInterval = setInterval(() => {
+      if (timeLeft > 0) {
+        timeLeft--;
+      } else {
+        // Time's up!
+        handleTimeout();
+      }
+    }, 1000);
+  }
+
+  function handleTimeout() {
+    if (selectedOption !== null) return;
+    isWrong = true;
+    alerts.trigger("Time's up! Silence is the hallmark of the idiot.", 'error');
+    
+    // Small delay before moving to next question
+    setTimeout(() => {
+      nextQuestion();
+    }, 2000);
+  }
+
   async function startQuiz() {
     if (!userName.trim()) {
       alerts.trigger("You can't be anonymous. Idiots hide; citizens stand accountable.", 'shame');
       return;
     }
+    step = 'confidence';
+  }
+
+  function confirmConfidence(level: ConfidenceLevel) {
+    confidenceLevel = level;
+    activeQuiz = getQuestionsForConfidence(level);
     step = 'quiz';
+    startTimer();
   }
 
   function handleOptionSelect(index: number) {
     if (selectedOption !== null) return;
     
     selectedOption = index;
-    const question = civicsQuiz[currentQuestionIndex];
+    const question = activeQuiz[currentQuestionIndex];
     
     if (index === question.correctAnswer) {
       score++;
@@ -45,30 +86,24 @@ import { civicsQuiz, getFeedback } from '$lib/quiz';
   }
 
   async function nextQuestion() {
-    if (currentQuestionIndex < civicsQuiz.length - 1) {
+    if (currentQuestionIndex < activeQuiz.length - 1) {
       currentQuestionIndex++;
       selectedOption = null;
       isWrong = false;
+      timeLeft = CONFIDENCE_CONFIG[confidenceLevel!].timeLimit;
     } else {
       await finishQuiz();
     }
   }
 
   async function finishQuiz() {
-    const percentage = score / civicsQuiz.length;
+    if (timerInterval) clearInterval(timerInterval);
+    
+    const percentage = score / activeQuiz.length;
     finalFeedback = getFeedback(percentage);
     
-    // Determine pass/fail for local shame tracking
-    const passed = score >= 4;
+    const passed = score >= Math.ceil(activeQuiz.length * 0.6);
     
-    // Optimistically update shame state for immediate UI feedback
-    // (server will also set cookie on form submit)
-    if (!passed) {
-      // Shame mode will be picked up by invalidateAll() from server cookie
-    } else {
-      // Redeemed
-    }
-
     const formData = new FormData();
     formData.append('name', userName);
     formData.append('score', score.toString());
@@ -94,27 +129,24 @@ import { civicsQuiz, getFeedback } from '$lib/quiz';
     isWrong = false;
     userName = '';
     finalFeedback = null;
+    confidenceLevel = null;
+    activeQuiz = [];
+    if (timerInterval) clearInterval(timerInterval);
   }
 </script>
 
 <Alerts />
 
-<!-- Layer 1: The Absolute Bottom (Opaque base color) -->
 <div class="fixed inset-0 bg-slate-900 -z-30"></div>
-
-<!-- Layer 2: The Word Cloud (Now behind the overlay) -->
 <BackgroundCanvas />
-
-<!-- Layer 3: The Semi-Transparent Blue Overlay (Mutes the words) -->
 <div class="fixed inset-0 bg-slate-900/40 backdrop-blur-[2px] -z-10"></div>
 
-<!-- Layer 4: The Content (Top layer) -->
 <div class="h-dvh overflow-y-auto flex justify-center items-start pt-12 pb-12 text-slate-100 font-sans selection:bg-red-500 selection:text-white p-3 md:p-8 relative z-10">
   <div class="max-w-2xl mx-auto w-full">
     
     {#if step === 'landing'}
       <div in:fade class="space-y-6 text-center">
-        <h1 in:fly={{ y: -20, duration: 600 }} class="text-4xl sm:text-5xl md:text-8xl font-black tracking-tighter text-white uppercase italic">
+        <h1 in:fly={{ y: -20, duration: 600 }} class="text-5xl sm:text-6xl md:text-8xl font-black tracking-tighter text-white uppercase italic">
           {#if isShameMode}
             I am <span class="text-red-600">the idiot.</span>
           {:else}
@@ -142,48 +174,7 @@ import { civicsQuiz, getFeedback } from '$lib/quiz';
           </div>
         </div>
 
-        <div in:fly={{ y: 20, duration: 600, delay: 200 }} class="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-6 text-left">
-          <div class="group relative p-4 md:p-6 bg-gradient-to-br from-red-900/30 to-red-950/50 border border-red-800/50 rounded-2xl cursor-pointer transition-all duration-500 hover:scale-105 hover:border-red-500/80 hover:shadow-2xl hover:shadow-red-900/40 hover:from-red-800/40 hover:to-red-950/60">
-            <div class="absolute inset-0 bg-gradient-to-r from-red-600/0 via-red-600/5 to-red-600/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-2xl"></div>
-            <div class="relative">
-              <div class="flex items-center gap-2 md:gap-3 mb-2 md:mb-3">
-                <div class="w-8 h-8 md:w-10 md:h-10 rounded-xl bg-red-600/20 flex items-center justify-center group-hover:bg-red-500/30 group-hover:scale-110 transition-all duration-300">
-                  <svg class="w-5 h-5 text-red-400 group-hover:text-red-300 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                </div>
-                <p class="text-red-400 font-bold text-sm md:text-lg group-hover:text-red-300 transition-colors duration-300">Financial Cost</p>
-              </div>
-              <p class="text-xs md:text-sm text-slate-400 leading-relaxed group-hover:text-slate-300 transition-colors duration-300">Not knowing how government works = paying more taxes through inefficiency.</p>
-            </div>
-          </div>
-
-          <div class="group relative p-4 md:p-6 bg-gradient-to-br from-red-900/30 to-red-950/50 border border-red-800/50 rounded-2xl cursor-pointer transition-all duration-500 hover:scale-105 hover:border-red-500/80 hover:shadow-2xl hover:shadow-red-900/40 hover:from-red-800/40 hover:to-red-950/60">
-            <div class="absolute inset-0 bg-gradient-to-r from-red-600/0 via-red-600/5 to-red-600/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-2xl"></div>
-            <div class="relative">
-              <div class="flex items-center gap-2 md:gap-3 mb-2 md:mb-3">
-                <div class="w-8 h-8 md:w-10 md:h-10 rounded-xl bg-red-600/20 flex items-center justify-center group-hover:bg-red-500/30 group-hover:scale-110 transition-all duration-300">
-                  <svg class="w-5 h-5 text-red-400 group-hover:text-red-300 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
-                </div>
-                <p class="text-red-400 font-bold text-sm md:text-lg group-hover:text-red-300 transition-colors duration-300">Corporate Rule</p>
-              </div>
-              <p class="text-xs md:text-sm text-slate-400 leading-relaxed group-hover:text-slate-300 transition-colors duration-300">Not voting = letting corporations decide your healthcare and environment.</p>
-            </div>
-          </div>
-
-          <div class="group relative p-4 md:p-6 bg-gradient-to-br from-red-900/30 to-red-950/50 border border-red-800/50 rounded-2xl cursor-pointer transition-all duration-500 hover:scale-105 hover:border-red-500/80 hover:shadow-2xl hover:shadow-red-900/40 hover:from-red-800/40 hover:to-red-950/60">
-            <div class="absolute inset-0 bg-gradient-to-r from-red-600/0 via-red-600/5 to-red-600/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-2xl"></div>
-            <div class="relative">
-              <div class="flex items-center gap-2 md:gap-3 mb-2 md:mb-3">
-                <div class="w-8 h-8 md:w-10 md:h-10 rounded-xl bg-red-600/20 flex items-center justify-center group-hover:bg-red-500/30 group-hover:scale-110 transition-all duration-300">
-                  <svg class="w-5 h-5 text-red-400 group-hover:text-red-300 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path></svg>
-                </div>
-                <p class="text-red-400 font-bold text-sm md:text-lg group-hover:text-red-300 transition-colors duration-300">Intellectual Decay</p>
-              </div>
-              <p class="text-xs md:text-sm text-slate-400 leading-relaxed group-hover:text-slate-300 transition-colors duration-300">Believing fake news = allowing your children to grow up uninformed.</p>
-            </div>
-          </div>
-        </div>
-
-        <div in:fly={{ y: 20, duration: 600, delay: 300 }} class="flex flex-col sm:flex-row items-center justify-center gap-3">
+        <div in:fly={{ y: 20, duration: 600, delay: 200 }} class="flex flex-col sm:flex-row items-center justify-center gap-3">
           <input 
             type="text" 
             bind:value={userName} 
@@ -199,29 +190,74 @@ import { civicsQuiz, getFeedback } from '$lib/quiz';
         </div>
       </div>
 
-    {:else if step === 'quiz'}
-      <div in:fly={{ y: 20 }} class="space-y-8">
-        <div class="flex justify-between items-end">
-          <span class="text-slate-500 font-mono">Question {currentQuestionIndex + 1}/{civicsQuiz.length}</span>
-          <span class="text-slate-500 font-mono">Score: {score}</span>
+    {:else if step === 'confidence'}
+      <div in:fade class="space-y-8 text-center">
+        <h2 in:fly={{ y: -20 }} class="text-3xl md:text-5xl font-black uppercase italic text-white">
+          How confident are you? <span class="text-red-600">Honestly.</span>
+        </h2>
+        
+        <div class="grid grid-cols-1 gap-4">
+          {#each Object.entries(CONFIDENCE_CONFIG) as [key, config]}
+            <button 
+              onclick={() => confirmConfidence(key as ConfidenceLevel)}
+              class="group relative p-6 bg-slate-800 border-2 border-slate-700 rounded-2xl text-left transition-all duration-300 hover:border-red-600 hover:scale-[1.02] active:scale-95 shadow-lg"
+            >
+              <div class="absolute inset-0 bg-red-600/5 opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl"></div>
+              <div class="relative flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <div>
+                  <span class="text-2xl font-black uppercase italic text-white">{config.label}</span>
+                  <p class="text-slate-400 text-sm">{config.description}</p>
+                </div>
+                <div class="text-red-500 font-mono font-bold text-lg">
+                  {config.questionCount} Qs &bull; {config.timeLimit}s/q
+                </div>
+              </div>
+            </button>
+          {/each}
         </div>
 
-        <div class="bg-slate-800 p-8 rounded-3xl border border-slate-700 shadow-2xl relative overflow-hidden"
+        <button onclick={() => step = 'landing'} class="text-slate-500 hover:text-slate-300 transition-colors underline text-sm uppercase tracking-widest">
+          Back to start
+        </button>
+      </div>
+
+    {:else if step === 'quiz'}
+      <div in:fade class="space-y-8">
+        <div class="flex justify-between items-end">
+          <div class="flex flex-col">
+            <span class="text-slate-500 font-mono text-xs uppercase">Question</span>
+            <span class="text-slate-100 font-mono text-xl">{currentQuestionIndex + 1}/{activeQuiz.length}</span>
+          </div>
+          
+          <div class="flex flex-col items-end">
+            <span class="text-slate-500 font-mono text-xs uppercase">Time Remaining</span>
+            <span class="text-slate-100 font-mono text-xl {timeLeft < 10 ? 'text-red-500 animate-pulse' : ''}">
+              {timeLeft}s
+            </span>
+          </div>
+
+          <div class="flex flex-col items-end">
+            <span class="text-slate-500 font-mono text-xs uppercase">Score</span>
+            <span class="text-slate-100 font-mono text-xl">{score}</span>
+          </div>
+        </div>
+
+        <div class="bg-slate-800 p-8 rounded-3xl border border-slate-700 shadow-2xl relative overflow-hidden transition-all duration-300"
              class:shake={isWrong}>
           
           <h2 class="text-2xl md:text-3xl font-bold mb-8 leading-tight">
-            {civicsQuiz[currentQuestionIndex].text}
+            {activeQuiz[currentQuestionIndex].text}
           </h2>
 
           <div class="grid gap-4">
-            {#each civicsQuiz[currentQuestionIndex].options as option, i}
+            {#each activeQuiz[currentQuestionIndex].options as option, i}
+              {@const isCorrect = selectedOption !== null && i === activeQuiz[currentQuestionIndex].correctAnswer}
+              {@const isSelectedWrong = selectedOption !== null && selectedOption === i && i !== activeQuiz[currentQuestionIndex].correctAnswer}
+              {@const isOther = selectedOption !== null && i !== activeQuiz[currentQuestionIndex].correctAnswer && i !== selectedOption}
               <button 
                 onclick={() => handleOptionSelect(i)}
                 disabled={selectedOption !== null}
-                class="p-4 text-left rounded-xl border-2 transition-all font-medium
-                {selectedOption === null ? 'border-slate-700 hover:border-slate-500 hover:bg-slate-700' : 
-                 i === civicsQuiz[currentQuestionIndex].correctAnswer ? 'border-green-500 bg-green-500/10 text-green-400' : 
-                 selectedOption === i ? 'border-red-500 bg-red-500/10 text-red-400' : 'border-slate-800 text-slate-600'}"
+                class="p-4 text-left rounded-xl border-2 transition-all font-medium {isCorrect ? 'border-green-500 bg-green-500/10 text-green-400' : ''} {isSelectedWrong ? 'border-red-500 bg-red-500/10 text-red-400' : ''} {selectedOption === null ? 'border-slate-700 hover:border-slate-500 hover:bg-slate-700' : ''} {isOther ? 'border-slate-800 text-slate-600' : ''}"
               >
                 {option}
               </button>
@@ -231,7 +267,7 @@ import { civicsQuiz, getFeedback } from '$lib/quiz';
           {#if selectedOption !== null}
             <div in:fade class="mt-8 p-6 bg-slate-900 rounded-2xl border-l-4 border-red-600">
               <p class="text-slate-400 text-sm uppercase tracking-widest mb-2 font-bold">The Fact</p>
-              <p class="text-lg text-slate-200 mb-6 italic">"{civicsQuiz[currentQuestionIndex].fact}"</p>
+              <p class="text-lg text-slate-200 mb-6 italic">"{activeQuiz[currentQuestionIndex].fact}"</p>
               <button 
                 onclick={nextQuestion}
                 class="w-full py-3 bg-white text-slate-900 font-bold rounded-xl hover:bg-slate-200 transition-colors"
@@ -248,7 +284,7 @@ import { civicsQuiz, getFeedback } from '$lib/quiz';
         <div class="space-y-4">
           <h1 class="text-5xl font-black uppercase italic">The Verdict</h1>
           <div class="text-8xl font-black {finalFeedback?.class}">
-            {Math.round((score / civicsQuiz.length) * 100)}%
+            {Math.round((score / activeQuiz.length) * 100)}%
           </div>
           <p class="text-2xl font-medium max-w-lg mx-auto {finalFeedback?.class}">
             {finalFeedback?.message}
@@ -261,7 +297,7 @@ import { civicsQuiz, getFeedback } from '$lib/quiz';
             {#each highScores as entry}
               <div class="flex justify-between items-center p-3 bg-slate-900 rounded-lg border border-slate-700">
                 <span class="font-medium">{entry.name}</span>
-                <span class="font-mono font-bold {entry.score < 3 ? 'text-red-500' : 'text-green-500'}">{entry.score}/{civicsQuiz.length}</span>
+                <span class="font-mono font-bold {entry.score < 3 ? 'text-red-500' : 'text-green-500'}"> {entry.score}</span>
               </div>
             {/each}
           </div>
