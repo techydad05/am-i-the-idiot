@@ -174,7 +174,7 @@
           </div>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-6 text-left">
+        <div in:fly={{ y: 20, duration: 600, delay: 200 }} class="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-6 text-left">
           <div class="group relative p-4 md:p-6 bg-gradient-to-br from-red-900/30 to-red-950/50 border border-red-800/50 rounded-2xl cursor-pointer transition-all duration-500 hover:scale-105 hover:border-red-500/80 hover:shadow-2xl hover:shadow-red-900/40 hover:from-red-800/40 hover:to-red-950/60">
             <div class="absolute inset-0 bg-gradient-to-r from-red-600/0 via-red-600/5 to-red-600/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-2xl"></div>
             <div class="relative">
