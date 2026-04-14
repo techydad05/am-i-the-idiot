@@ -1,6 +1,7 @@
 <script lang="ts">
-  import { fade, fly } from 'svelte/transition';
-  import { civicsQuiz, getFeedback } from '$lib/quiz';
+import { fade, fly } from 'svelte/transition';
+import { invalidateAll } from '$app/navigation';
+import { civicsQuiz, getFeedback } from '$lib/quiz';
   import { alerts } from '$lib/alerts.svelte';
   import Alerts from '$lib/components/Alerts.svelte';
   import BackgroundCanvas from '$lib/components/BackgroundCanvas.svelte';
@@ -63,10 +64,9 @@
     // Optimistically update shame state for immediate UI feedback
     // (server will also set cookie on form submit)
     if (!passed) {
-      // Trigger shame mode locally until page reload
-      isShameMode = true;
+      // Shame mode will be picked up by invalidateAll() from server cookie
     } else {
-      isShameMode = false;
+      // Redeemed
     }
 
     const formData = new FormData();
@@ -80,6 +80,7 @@
     
     if (response.ok) {
       alerts.trigger("Your shame (or glory) has been recorded.", 'info');
+      await invalidateAll();
     }
     
     step = 'result';
@@ -108,7 +109,7 @@
 <div class="fixed inset-0 bg-slate-900/40 backdrop-blur-[2px] -z-10"></div>
 
 <!-- Layer 4: The Content (Top layer) -->
-<div class="h-dvh overflow-hidden flex items-center justify-center text-slate-100 font-sans selection:bg-red-500 selection:text-white p-3 md:p-8 relative z-10">
+<div class="h-dvh overflow-y-auto flex justify-center items-start pt-12 pb-12 text-slate-100 font-sans selection:bg-red-500 selection:text-white p-3 md:p-8 relative z-10">
   <div class="max-w-2xl mx-auto w-full">
     
     {#if step === 'landing'}
