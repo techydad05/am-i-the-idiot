@@ -7,6 +7,10 @@
 
   let { data } = $props();
   
+  // shameState from server cookie tracker
+  // Display "I am the idiot" if they've failed and never passed
+  let isShameMode = $derived(data.shameState?.failed && !data.shameState?.passed);
+  
   let step = $state('landing'); // landing, quiz, result
   let currentQuestionIndex = $state(0);
   let score = $state(0);
@@ -53,6 +57,18 @@
     const percentage = score / civicsQuiz.length;
     finalFeedback = getFeedback(percentage);
     
+    // Determine pass/fail for local shame tracking
+    const passed = score >= 4;
+    
+    // Optimistically update shame state for immediate UI feedback
+    // (server will also set cookie on form submit)
+    if (!passed) {
+      // Trigger shame mode locally until page reload
+      isShameMode = true;
+    } else {
+      isShameMode = false;
+    }
+
     const formData = new FormData();
     formData.append('name', userName);
     formData.append('score', score.toString());
@@ -64,7 +80,6 @@
     
     if (response.ok) {
       alerts.trigger("Your shame (or glory) has been recorded.", 'info');
-      window.location.reload(); 
     }
     
     step = 'result';
@@ -99,7 +114,11 @@
     {#if step === 'landing'}
       <div in:fade class="space-y-6 text-center">
         <h1 in:fly={{ y: -20, duration: 600 }} class="text-4xl sm:text-5xl md:text-8xl font-black tracking-tighter text-white uppercase italic">
-          Am I <span class="text-red-600">The Idiot?</span>
+          {#if isShameMode}
+            I am <span class="text-red-600">the idiot.</span>
+          {:else}
+            Am I <span class="text-red-600">The Idiot?</span>
+          {/if}
         </h1>
         
         <div in:fly={{ y: 20, duration: 600, delay: 100 }} class="relative group">
