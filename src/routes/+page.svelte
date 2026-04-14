@@ -146,7 +146,7 @@
     
     {#if step === 'landing'}
       <div in:fade class="space-y-6 text-center">
-        <h1 in:fly={{ y: -20, duration: 600 }} class="text-5xl sm:text-6xl md:text-8xl font-black tracking-tighter text-white uppercase italic">
+        <h1 in:fly={{ y: -20, duration: 600 }} class="text-6xl sm:text-7xl md:text-8xl font-black tracking-tighter text-white uppercase italic">
           {#if isShameMode}
             I am <span class="text-red-600">the idiot.</span>
           {:else}
