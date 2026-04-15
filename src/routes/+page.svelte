@@ -5,17 +5,15 @@
   import { alerts } from '$lib/alerts.svelte';
   import Alerts from '$lib/components/Alerts.svelte';
   import BackgroundCanvas from '$lib/components/BackgroundCanvas.svelte';
-  import { onMount } from 'svelte';
 
   let { data } = $props();
   
   let isShameMode = $derived(data.shameState?.failed && !data.shameState?.passed);
-  // Only show shame header on fresh page load, not during client-side invalidateAll() re-renders
+  // Sync shame header whenever shameState changes (invalidateAll() updates) or on fresh mount
   let showShameHeader = $state(false);
   
-  onMount(() => {
-    // Set after hydration so fresh page loads show the shame header,
-    // but invalidateAll() re-renders (which happen after mount) do not trigger it
+  $effect(() => {
+    // Set after mount and whenever shameState changes via invalidateAll()
     showShameHeader = isShameMode;
   });
   
