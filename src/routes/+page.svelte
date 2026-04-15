@@ -128,6 +128,7 @@
   }
 
   function reset() {
+    window.scrollTo({ top: 0, behavior: 'instant' });
     step = 'landing';
     currentQuestionIndex = 0;
     score = 0;
@@ -147,12 +148,12 @@
 <BackgroundCanvas />
 <div class="fixed inset-0 bg-slate-900/40 backdrop-blur-[2px] -z-10"></div>
 
-<div class="h-dvh overflow-y-auto flex justify-center items-start pt-12 pb-12 text-slate-100 font-sans selection:bg-red-500 selection:text-white p-3 md:p-8 relative z-10">
-  <div class="max-w-2xl mx-auto w-full">
+<div class="h-dvh overflow-hidden flex justify-center items-center text-slate-100 font-sans selection:bg-red-500 selection:text-white p-3 md:p-8 relative z-10">
+  <div class="max-w-2xl mx-auto w-full h-full overflow-y-auto flex flex-col py-6 md:py-8">
     
     {#if step === 'landing'}
-      <div in:fade class="space-y-6 text-center">
-        <h1 in:fly={{ y: -20, duration: 600 }} class="text-6xl sm:text-7xl md:text-8xl font-black tracking-tighter text-white uppercase italic">
+      <div in:fade class="space-y-4 md:space-y-6 text-center flex-1 flex flex-col justify-center">
+        <h1 in:fly={{ y: -20, duration: 600 }} class="text-5xl sm:text-6xl md:text-7xl font-black tracking-tighter text-white uppercase italic">
           {#if showShameHeader}
             I am <span class="text-red-600">the idiot.</span>
           {:else}
@@ -236,65 +237,66 @@
       </div>
 
     {:else if step === 'confidence'}
-      <div in:fade class="space-y-8 text-center">
-        <h2 in:fly={{ y: -20 }} class="text-3xl md:text-5xl font-black uppercase italic text-white">
+      <div in:fade class="space-y-4 md:space-y-6 text-center flex-1 flex flex-col justify-center">
+        <h2 in:fly={{ y: -20 }} class="text-2xl md:text-4xl font-black uppercase italic text-white">
           How confident are you? <span class="text-red-600">Honestly.</span>
         </h2>
         
-        <div class="grid grid-cols-1 gap-4">
+        <div class="grid grid-cols-1 gap-3">
           {#each Object.entries(CONFIDENCE_CONFIG) as [key, config]}
             <button 
               onclick={() => confirmConfidence(key as ConfidenceLevel)}
-              class="group relative p-6 bg-slate-800 border-2 border-slate-700 rounded-2xl text-left transition-all duration-300 hover:border-red-600 hover:scale-[1.02] active:scale-95 shadow-lg"
+              class="group relative p-4 md:p-5 bg-slate-800 border-2 border-slate-700 rounded-xl text-left transition-all duration-300 hover:border-red-600 hover:scale-[1.02] active:scale-95 shadow-lg"
             >
-              <div class="absolute inset-0 bg-red-600/5 opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl"></div>
+              <div class="absolute inset-0 bg-red-600/5 opacity-0 group-hover:opacity-100 transition-opacity rounded-xl"></div>
               <div class="relative flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                 <div>
-                  <span class="text-2xl font-black uppercase italic text-white">{config.label}</span>
-                  <p class="text-slate-400 text-sm">{config.description}</p>
+                  <span class="text-xl md:text-2xl font-black uppercase italic text-white">{config.label}</span>
+                  <p class="text-slate-400 text-xs md:text-sm">{config.description}</p>
                 </div>
-                <div class="text-red-500 font-mono font-bold text-lg">
-                  {config.questionCount} Qs &bull; {config.timeLimit}s/q
+                <div class="text-red-500 font-mono font-bold text-sm md:text-base shrink-0">
+                  {config.questionCount} Qs · {config.timeLimit}s/q
                 </div>
               </div>
             </button>
           {/each}
         </div>
 
-        <button onclick={() => step = 'landing'} class="text-slate-500 hover:text-slate-300 transition-colors underline text-sm uppercase tracking-widest">
+        <button onclick={() => step = 'landing'} class="text-slate-500 hover:text-slate-300 transition-colors underline text-xs md:text-sm uppercase tracking-widest">
           Back to start
         </button>
       </div>
 
     {:else if step === 'quiz'}
-      <div in:fade class="space-y-8">
-        <div class="flex justify-between items-end">
+      <div in:fade class="space-y-4 md:space-y-6 flex-1 flex flex-col min-h-0">
+        <div class="flex justify-between items-center shrink-0">
           <div class="flex flex-col">
             <span class="text-slate-500 font-mono text-xs uppercase">Question</span>
-            <span class="text-slate-100 font-mono text-xl">{currentQuestionIndex + 1}/{activeQuiz.length}</span>
+            <span class="text-slate-100 font-mono text-base">{currentQuestionIndex + 1}/{activeQuiz.length}</span>
           </div>
           
-          <div class="flex flex-col items-end">
-            <span class="text-slate-500 font-mono text-xs uppercase">Time Remaining</span>
-            <span class="text-slate-100 font-mono text-xl {timeLeft < 10 ? 'text-red-500 animate-pulse' : ''}">
+          <div class="flex flex-col items-center">
+            <span class="text-slate-500 font-mono text-xs uppercase">Time</span>
+            <span class="text-slate-100 font-mono text-base {timeLeft < 10 ? 'text-red-500 animate-pulse' : ''}">
               {timeLeft}s
             </span>
           </div>
 
           <div class="flex flex-col items-end">
             <span class="text-slate-500 font-mono text-xs uppercase">Score</span>
-            <span class="text-slate-100 font-mono text-xl">{score}</span>
+            <span class="text-slate-100 font-mono text-base">{score}</span>
           </div>
         </div>
 
-        <div class="bg-slate-800 p-8 rounded-3xl border border-slate-700 shadow-2xl relative overflow-hidden transition-all duration-300"
-             class:shake={isWrong}>
-          
-          <h2 class="text-2xl md:text-3xl font-bold mb-8 leading-tight">
+        <div class="bg-slate-800 p-4 md:p-6 rounded-2xl md:rounded-3xl border border-slate-700 shadow-2xl relative overflow-y-auto transition-all duration-300 flex-1 min-h-0"
+             class:shake={isWrong}
+             style="max-height: calc(100dvh - 160px);">
+         
+          <h2 class="text-lg md:text-2xl font-bold mb-4 leading-snug shrink-0">
             {activeQuiz[currentQuestionIndex].text}
           </h2>
 
-          <div class="grid gap-4">
+          <div class="grid gap-2 md:gap-3">
             {#each activeQuiz[currentQuestionIndex].options as option, i}
               {@const isCorrect = selectedOption !== null && i === activeQuiz[currentQuestionIndex].correctAnswer}
               {@const isSelectedWrong = selectedOption !== null && selectedOption === i && i !== activeQuiz[currentQuestionIndex].correctAnswer}
@@ -302,7 +304,7 @@
               <button 
                 onclick={() => handleOptionSelect(i)}
                 disabled={selectedOption !== null}
-                class="p-4 text-left rounded-xl border-2 transition-all font-medium {isCorrect ? 'border-green-500 bg-green-500/10 text-green-400' : ''} {isSelectedWrong ? 'border-red-500 bg-red-500/10 text-red-400' : ''} {selectedOption === null ? 'border-slate-700 hover:border-slate-500 hover:bg-slate-700' : ''} {isOther ? 'border-slate-800 text-slate-600' : ''}"
+                class="p-3 md:p-4 text-left rounded-xl border-2 transition-all font-medium text-sm md:text-base {isCorrect ? 'border-green-500 bg-green-500/10 text-green-400' : ''} {isSelectedWrong ? 'border-red-500 bg-red-500/10 text-red-400' : ''} {selectedOption === null ? 'border-slate-700 hover:border-slate-500 hover:bg-slate-700' : ''} {isOther ? 'border-slate-800 text-slate-600' : ''}"
               >
                 {option}
               </button>
@@ -310,12 +312,12 @@
           </div>
 
           {#if selectedOption !== null}
-            <div in:fade class="mt-8 p-6 bg-slate-900 rounded-2xl border-l-4 border-red-600">
-              <p class="text-slate-400 text-sm uppercase tracking-widest mb-2 font-bold">The Fact</p>
-              <p class="text-lg text-slate-200 mb-6 italic">"{activeQuiz[currentQuestionIndex].fact}"</p>
+            <div in:fade class="mt-4 p-4 bg-slate-900 rounded-xl border-l-4 border-red-600 shrink-0">
+              <p class="text-slate-400 text-xs uppercase tracking-widest mb-1 font-bold">The Fact</p>
+              <p class="text-slate-200 text-sm mb-4 italic leading-snug">"{activeQuiz[currentQuestionIndex].fact}"</p>
               <button 
                 onclick={nextQuestion}
-                class="w-full py-3 bg-white text-slate-900 font-bold rounded-xl hover:bg-slate-200 transition-colors"
+                class="w-full py-2.5 bg-white text-slate-900 font-bold rounded-lg hover:bg-slate-200 transition-colors text-sm"
               >
                 Continue
               </button>
