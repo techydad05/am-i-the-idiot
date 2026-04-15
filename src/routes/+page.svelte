@@ -11,7 +11,7 @@
   
   let isShameMode = $derived(data.shameState?.failed && !data.shameState?.passed);
   
-  let step = $state('landing'); // landing, confidence, quiz, result
+  let step = $state(data.step); // landing, confidence, quiz, result
   let confidenceLevel = $state<ConfidenceLevel | null>(null);
   let activeQuiz = $state<Question[]>([]);
   

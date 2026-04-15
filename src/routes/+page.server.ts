@@ -26,7 +26,8 @@ export const load = async ({ cookies }: { cookies: Cookies }) => {
 
   return {
     highScores,
-    shameState: tracker // passed=true means they're redeemed; failed=true & !passed means shame mode
+    shameState: tracker,
+    step: 'landing'
   };
 };
 
