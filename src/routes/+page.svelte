@@ -168,7 +168,7 @@
 <div class="fixed inset-0 bg-slate-900/40 backdrop-blur-[2px] -z-10"></div>
 
 <div class="min-h-dvh overflow-hidden flex justify-center text-slate-100 font-sans selection:bg-red-500 selection:text-white p-3 md:p-8 relative z-10">
-  <div class="max-w-2xl mx-auto w-full flex flex-col py-6 md:py-8 flex-1 overflow-y-auto">
+  <div class="max-w-2xl mx-auto w-full flex flex-col py-6 md:py-8 flex-1 overflow-y-auto md:overflow-visible">
     
     {#if step === 'landing'}
       <div class="space-y-4 md:space-y-6 text-center flex-1 flex flex-col justify-center animate-fade-in">
