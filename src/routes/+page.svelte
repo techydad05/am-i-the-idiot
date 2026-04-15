@@ -1,6 +1,8 @@
 <script lang="ts">
   import { invalidateAll } from '$app/navigation';
-  import { civicsQuiz, getFeedback, CONFIDENCE_CONFIG, getQuestionsForConfidence, type ConfidenceLevel, type Question } from '$lib/quiz';
+  import { fade } from 'svelte/transition';
+  import { spring } from 'svelte/motion';
+  import { civicsQuiz, getFeedback, CONFIDENCE_CONFIG, getQuestionsForConfidence, getCivicPersona, type CivicPersona, type ConfidenceLevel, type Question } from '$lib/quiz';
   import { alerts } from '$lib/alerts.svelte';
   import Alerts from '$lib/components/Alerts.svelte';
   import BackgroundCanvas from '$lib/components/BackgroundCanvas.svelte';
@@ -30,10 +32,13 @@
   
   let currentQuestionIndex = $state(0);
   let score = $state(0);
+  let userAnswers = $state<number[]>([]);
   let selectedOption = $state<number | null>(null);
   let isWrong = $state(false);
   let userName = $state('');
   let finalFeedback = $state<{ message: string; class: string } | null>(null);
+  let persona = $state<CivicPersona | null>(null);
+  let dca = $state<any | null>(null);
   let highScores = $derived(data.highScores);
 
   // Timer state
@@ -86,6 +91,11 @@
     step = 'confidence';
   }
 
+  function quickStart() {
+    userName = 'Anonymous Idiot';
+    step = 'confidence';
+  }
+
   function confirmConfidence(level: ConfidenceLevel) {
     confidenceLevel = level;
     activeQuiz = getQuestionsForConfidence(level);
@@ -97,6 +107,7 @@
     if (selectedOption !== null) return;
     
     selectedOption = index;
+    userAnswers.push(index);
     const question = activeQuiz[currentQuestionIndex];
     
     if (index === question.correctAnswer) {
@@ -124,6 +135,12 @@
     
     const percentage = score / activeQuiz.length;
     finalFeedback = getFeedback(percentage);
+    persona = getCivicPersona(percentage);
+    
+    // Categories analysis for DCA
+    const { analyzeCategories, getDCAForUser } = await import('$lib/quiz');
+    const categoryScores = analyzeCategories(activeQuiz, userAnswers);
+    dca = getDCAForUser(categoryScores);
     
     const passed = score >= Math.ceil(activeQuiz.length * 0.6);
     
@@ -276,13 +293,19 @@
             />
             <button
               onclick={startQuiz}
-              class="px-4 py-3 md:px-6 md:py-4 bg-gradient-to-r from-red-600 to-red-500 hover:from-red-500 hover:to-red-400 text-white font-black text-base md:text-lg uppercase tracking-widest rounded-xl transition-all transform hover:scale-105 active:scale-95 shadow-lg shadow-red-900/30 whitespace-nowrap hover:shadow-red-900/50"
+              class=\"px-4 py-3 md:px-6 md:py-4 bg-gradient-to-r from-red-600 to-red-500 hover:from-red-500 hover:to-red-400 text-white font-black text-base md:text-lg uppercase tracking-widest rounded-xl transition-all transform hover:scale-105 active:scale-95 shadow-lg shadow-red-900/30 whitespace-nowrap hover:shadow-red-900/50\"
             >
               Test My Intelligence
             </button>
+            <button
+              onclick={quickStart}
+              class=\"px-4 py-3 md:px-6 md:py-4 bg-slate-700 hover:bg-slate-600 text-slate-200 font-black text-base md:text-lg uppercase tracking-widest rounded-xl transition-all transform hover:scale-105 active:scale-95 shadow-lg shadow-black/30 whitespace-nowrap\"
+            >
+              Quick Play
+            </button>
             <a
-              href="/auth/signin"
-              class="text-slate-500 hover:text-red-400 text-xs uppercase tracking-widest transition-colors px-2 py-2 whitespace-nowrap"
+              href=\"/auth/signin\"
+              class=\"text-slate-500 hover:text-red-400 text-xs uppercase tracking-widest transition-colors px-2 py-2 whitespace-nowrap\"
             >
               Sign in to save
             </a>
@@ -380,21 +403,46 @@
         </div>
       </div>
 
-    {:else if step === 'result'}
-      <div in:fade class="space-y-12 text-center">
-        <div class="space-y-4">
-          <h1 class="text-5xl font-black uppercase italic">The Verdict</h1>
-          <div class="text-8xl font-black {finalFeedback?.class}">
+            {:else if step === 'result'}
+      <div in:fade class="space-y-8 text-center animate-fade-in">
+        <div class="space-y-2">
+          <h1 class="text-4xl md:text-6xl font-black uppercase italic tracking-tighter">The Verdict</h1>
+          <div class="text-8xl md:text-9xl font-black {finalFeedback?.class} leading-none">
             {Math.round((score / activeQuiz.length) * 100)}%
           </div>
-          <p class="text-2xl font-medium max-w-lg mx-auto {finalFeedback?.class}">
-            {finalFeedback?.message}
-          </p>
         </div>
 
-        <div class="bg-slate-800 p-8 rounded-3xl border border-slate-700 shadow-xl">
-          <h3 class="text-2xl font-bold mb-6 uppercase tracking-tighter">Wall of Shame & Glory</h3>
-          <div class="space-y-3">
+        {#if persona}
+          <div class="relative group max-w-md mx-auto p-1">
+            <div class="absolute -inset-1 {persona.glowColor} rounded-3xl blur opacity-30 group-hover:opacity-60 transition duration-500"></div>
+            <div class="relative bg-slate-800 border-4 {persona.borderColor} rounded-3xl p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
+              <div class="text-6xl mb-4">{persona.emoji}</div>
+              <h2 class="text-3xl font-black uppercase italic {persona.color} mb-2">{persona.label}</h2>
+              <p class="text-slate-300 text-lg leading-relaxed">{persona.tagline}</p>
+            </div>
+          </div>
+        {/if}
+
+        {#if dca}
+          <div class="bg-white text-slate-900 p-6 rounded-2xl border-4 border-slate-900 shadow-[8px_8px_0px_0px_rgba(220,38,38,1)] max-w-md mx-auto text-left">
+            <div class="flex items-center gap-3 mb-3">
+              <span class="text-2xl">{dca.icon}</span>
+              <h3 class="font-black uppercase italic text-sm tracking-widest">Your Next Step</h3>
+            </div>
+            <p class="font-bold text-lg mb-4">{dca.action}</p>
+            <a 
+              href={dca.actionUrl} 
+              target="_blank"
+              class="inline-block w-full text-center py-2 bg-slate-900 text-white font-bold rounded-lg hover:bg-slate-800 transition-colors"
+            >
+              Take Action
+            </a>
+          </div>
+        {/if}
+
+        <div class="bg-slate-800 p-6 md:p-8 rounded-3xl border border-slate-700 shadow-xl max-w-2xl mx-auto">
+          <h3 class="text-xl font-bold mb-6 uppercase tracking-tighter text-left">Wall of Shame & Glory</h3>
+          <div class="space-y-2">
             {#each highScores as entry}
               <div class="flex justify-between items-center p-3 bg-slate-900 rounded-lg border border-slate-700">
                 <span class="font-medium">{entry.name}</span>
@@ -404,14 +452,80 @@
           </div>
         </div>
 
-        <button 
-          onclick={reset}
-          class="px-8 py-4 bg-slate-100 text-slate-900 font-black text-xl uppercase tracking-widest rounded-xl transition-all hover:bg-white"
-        >
-          Try to be less of an idiot
-        </button>
+        <div class="flex flex-col sm:flex-row gap-3 justify-center items-center">
+          <button 
+            onclick={reset}
+            class="px-8 py-4 bg-slate-100 text-slate-900 font-black text-xl uppercase tracking-widest rounded-xl transition-all hover:bg-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:translate-y-1 active:shadow-none"
+          >
+            Try to be less of an idiot
+          </button>
+
+          <div class="flex gap-3">
+            <button 
+              onclick={() => {
+                const text = getShareText(userName, score / activeQuiz.length, persona?.tier ?? 'idiot');
+                window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`, '_blank');
+              }}
+              class="p-4 bg-slate-800 border-2 border-slate-700 rounded-xl hover:border-red-600 transition-colors group"
+              title="Share on X"
+            >
+              <svg class="w-6 h-6 text-slate-400 group-hover:text-white transition-colors" fill="currentColor" viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.078z"/></svg>
+            </button>
+            <button 
+              onclick={() => {
+                const text = getShareText(userName, score / activeQuiz.length, persona?.tier ?? 'idiot');
+                navigator.clipboard.writeText(text);
+                alerts.trigger("Copied to clipboard! Go spread the shame.", 'info');
+              }}
+              class="p-4 bg-slate-800 border-2 border-slate-700 rounded-xl hover:border-red-600 transition-colors group"
+              title="Copy Link"
+            >
+              <svg class="w-6 h-6 text-slate-400 group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" /></svg>
+            </button>
+          </div>
+        </div>
       </div>
-    {/if}
+    {/if}{/if}
+
+        {#if dca}
+          <div class="bg-white text-slate-900 p-6 rounded-2xl border-4 border-slate-900 shadow-[8px_8px_0px_0px_rgba(220,38,38,1)] max-w-md mx-auto text-left">
+            <div class="flex items-center gap-3 mb-3">
+              <span class="text-2xl">{dca.icon}</span>
+              <h3 class="font-black uppercase italic text-sm tracking-widest">Your Next Step</h3>
+            </div>
+            <p class="font-bold text-lg mb-4">{dca.action}</p>
+            <a 
+              href={dca.actionUrl} 
+              target="_blank"
+              class="inline-block w-full text-center py-2 bg-slate-900 text-white font-bold rounded-lg hover:bg-slate-800 transition-colors"
+            >
+              Take Action
+            </a>
+          </div>
+        {/if}
+
+        <div class="bg-slate-800 p-6 md:p-8 rounded-3xl border border-slate-700 shadow-xl max-w-2xl mx-auto">
+          <h3 class="text-xl font-bold mb-6 uppercase tracking-tighter text-left">Wall of Shame & Glory</h3>
+          <div class="space-y-2">
+            {#each highScores as entry}
+              <div class="flex justify-between items-center p-3 bg-slate-900 rounded-lg border border-slate-700">
+                <span class="font-medium">{entry.name}</span>
+                <span class="font-mono font-bold {entry.score < 3 ? 'text-red-500' : 'text-green-500'}"> {entry.score}</span>
+              </div>
+            {/each}
+          </div>
+        </div>
+
+        <div class="flex flex-col sm:flex-row gap-3 justify-center items-center">
+          <button 
+            onclick={reset}
+            class="px-8 py-4 bg-slate-100 text-slate-900 font-black text-xl uppercase tracking-widest rounded-xl transition-all hover:bg-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:translate-y-1 active:shadow-none"
+          >
+            Try to be less of an idiot
+          </button>
+        </div>
+      </div>
+    {/if}{/if}
   </div>
 </div>
 

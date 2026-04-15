@@ -140,7 +140,7 @@
   bind:this={canvasDiv}
   bind:clientWidth={containerWidth} 
   bind:clientHeight={containerHeight}
-  class="absolute inset-0 pointer-events-none -z-10 overflow-hidden"
+  class=\"fixed inset-0 pointer-events-none -z-10 overflow-hidden\"
 >
   {#each particles as p}
     <span 

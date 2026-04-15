@@ -210,3 +210,174 @@ export function getFeedback(percentage: number) {
     return { message: shameMessages.success[Math.floor(Math.random() * shameMessages.success.length)], class: 'text-green-600 font-bold' };
   }
 }
+
+// === CIVIC PERSONA CLASSIFICATION ===
+export type PersonaTier = 'saint' | 'citizen' | 'aspiring' | 'numb' | 'idiot';
+
+export interface CivicPersona {
+  tier: PersonaTier;
+  label: string;
+  emoji: string;
+  tagline: string;
+  color: string;
+  borderColor: string;
+  glowColor: string;
+}
+
+const PERSONA_MAP: Record<PersonaTier, Omit<CivicPersona, 'tier'>> = {
+  saint: {
+    label: 'The Civic Saint',
+    emoji: '🏛️',
+    tagline: 'You know your government. The original Greeks would be proud.',
+    color: 'text-emerald-400',
+    borderColor: 'border-emerald-500',
+    glowColor: 'shadow-emerald-500/30',
+  },
+  citizen: {
+    label: 'The Aspiring Citizen',
+    emoji: '⚖️',
+    tagline: 'Solid civic literacy. You care enough to learn. Now inspire others.',
+    color: 'text-green-400',
+    borderColor: 'border-green-500',
+    glowColor: 'shadow-green-500/30',
+  },
+  aspiring: {
+    label: 'The Comfortably Numb',
+    emoji: '🌫️',
+    tagline: "You've checked out. Time to check back in — democracy needs you.",
+    color: 'text-amber-400',
+    borderColor: 'border-amber-500',
+    glowColor: 'shadow-amber-500/30',
+  },
+  numb: {
+    label: 'The Comfortably Numb',
+    emoji: '🌫️',
+    tagline: "You've checked out. Time to check back in — democracy needs you.",
+    color: 'text-orange-400',
+    borderColor: 'border-orange-500',
+    glowColor: 'shadow-orange-500/30',
+  },
+  idiot: {
+    label: 'The Original Idiot',
+    emoji: '🗿',
+    tagline: 'In ancient Greece, you\'d be the person the polis feared most.',
+    color: 'text-red-500',
+    borderColor: 'border-red-600',
+    glowColor: 'shadow-red-600/40',
+  },
+};
+
+export function getCivicPersona(percentage: number): CivicPersona {
+  const tier = percentage >= 0.9 ? 'saint'
+    : percentage >= 0.7 ? 'citizen'
+    : percentage >= 0.5 ? 'aspiring'
+    : percentage >= 0.3 ? 'numb'
+    : 'idiot';
+  return { tier, ...PERSONA_MAP[tier] };
+}
+
+// === CATEGORY ANALYSIS FOR DCAs ===
+export type Category = 'constitution' | 'branches' | 'rights' | 'elections' | 'citizenship';
+
+export interface CategoryScore {
+  category: Category;
+  label: string;
+  icon: string;
+  correct: number;
+  total: number;
+  percentage: number;
+  action: string;
+  actionUrl: string;
+}
+
+export const DCA_ACTIONS: Record<Category, { action: string; actionUrl: string }> = {
+  constitution: {
+    action: 'Read the Constitution (in 10 minutes)',
+    actionUrl: 'https://constitutioncenter.org/the-constitution',
+  },
+  branches: {
+    action: 'Find your representatives',
+    actionUrl: 'https://www.congress.gov/members',
+  },
+  rights: {
+    action: 'Check your voter registration',
+    actionUrl: 'https://www.usa.gov/voting',
+  },
+  elections: {
+    action: 'See what\'s on your ballot',
+    actionUrl: 'https://www.ballotready.org',
+  },
+  citizenship: {
+    action: 'Take a deeper civic course',
+    actionUrl: 'https://www.icivics.org/games',
+  },
+};
+
+export function analyzeCategories(questions: Question[], answers: number[]): CategoryScore[] {
+  const categoryMap: Record<Category, { correct: number; total: number }> = {
+    constitution: { correct: 0, total: 0 },
+    branches: { correct: 0, total: 0 },
+    rights: { correct: 0, total: 0 },
+    elections: { correct: 0, total: 0 },
+    citizenship: { correct: 0, total: 0 },
+  };
+
+  questions.forEach((q, i) => {
+    categoryMap[q.category].total++;
+    if (answers[i] === q.correctAnswer) {
+      categoryMap[q.category].correct++;
+    }
+  });
+
+  const labels: Record<Category, string> = {
+    constitution: 'Constitution',
+    branches: 'Gov\'t Branches',
+    rights: 'Rights',
+    elections: 'Elections',
+    citizenship: 'Citizenship',
+  };
+
+  const icons: Record<Category, string> = {
+    constitution: '📜',
+    branches: '⚖️',
+    rights: '🗽',
+    elections: '🗳️',
+    citizenship: '🪖',
+  };
+
+  return (Object.keys(categoryMap) as Category[]).map(cat => {
+    const { correct, total } = categoryMap[cat];
+    return {
+      category: cat,
+      label: labels[cat],
+      icon: icons[cat],
+      correct,
+      total,
+      percentage: total > 0 ? correct / total : 0,
+      ...DCA_ACTIONS[cat],
+    };
+  });
+}
+
+export function getWeakestCategories(scores: CategoryScore[]): CategoryScore[] {
+  return scores
+    .filter(s => s.total > 0 && s.percentage < 0.6)
+    .sort((a, b) => a.percentage - b.percentage);
+}
+
+export function getDCAForUser(scores: CategoryScore[]): CategoryScore | null {
+  const weakest = getWeakestCategories(scores);
+  return weakest[0] ?? null;
+}
+
+// === SHARE TEXT GENERATION ===
+export function getShareText(name: string, percentage: number, tier: PersonaTier): string {
+  const texts: Record<PersonaTier, string> = {
+    saint: `${name} scored ${Math.round(percentage * 100)}% on the civic literacy test and earned "Civic Saint" status. In ancient Greece, an idiot was someone who avoided civic duty. ${name} clearly doesn't. Take the test 👉 amitheidiot.com`,
+    citizen: `${name} scored ${Math.round(percentage * 100)}% on the civic literacy test. They know enough to be dangerous AND useful. In ancient Greece, an idiot was someone who avoided civic participation. Take the test 👉 amitheidiot.com`,
+    aspiring: `${name} scored ${Math.round(percentage * 100)}% on the civic literacy test. Comfortably numb isn't a civic virtue. In ancient Greece, an idiot was someone who wouldn't show up. Take the test 👉 amitheidiot.com`,
+    numb: `${name} scored ${Math.round(percentage * 100)}% on the civic literacy test. The Greeks had a word for people who don't participate: idiot. Take the test 👉 amitheidiot.com`,
+    idiot: `${name} scored ${Math.round(percentage * 100)}% on the civic literacy test. They ARE the original Greek idiot. In ancient Greece, you were the person the polis feared most. Take the test 👉 amitheidiot.com`,
+  };
+  return texts[tier];
+}
