@@ -1,4 +1,4 @@
-import { Y as index_server_exports } from './internal-D3XSU-rT.js';
+import { Y as index_server_exports } from './internal-VHWd0RH5.js';
 import { n as noop } from './dev-BLwf7WOh.js';
 
 var is_legacy = noop.toString().includes("$$") || /function \w+\(\) \{\}/.test(noop.toString());
@@ -19,4 +19,4 @@ if (is_legacy) {
 //#region node_modules/@sveltejs/kit/src/runtime/client/client.js
 /** @import { RemoteQueryCacheEntry } from './remote-functions/query.svelte.js' */
 var { onMount, tick } = index_server_exports;
-//# sourceMappingURL=client-7711REle.js.map
+//# sourceMappingURL=client-Ccf9GULc.js.map

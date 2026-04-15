@@ -10,6 +10,14 @@
   let { data } = $props();
   
   let isShameMode = $derived(data.shameState?.failed && !data.shameState?.passed);
+  // Only show shame header on fresh page load, not during client-side invalidateAll() re-renders
+  let showShameHeader = $state(false);
+  
+  onMount(() => {
+    // Set after hydration so fresh page loads show the shame header,
+    // but invalidateAll() re-renders (which happen after mount) do not trigger it
+    showShameHeader = isShameMode;
+  });
   
   let step = $state(data.step); // landing, confidence, quiz, result
   let confidenceLevel = $state<ConfidenceLevel | null>(null);
@@ -147,7 +155,7 @@
     {#if step === 'landing'}
       <div in:fade class="space-y-6 text-center">
         <h1 in:fly={{ y: -20, duration: 600 }} class="text-6xl sm:text-7xl md:text-8xl font-black tracking-tighter text-white uppercase italic">
-          {#if isShameMode}
+          {#if showShameHeader}
             I am <span class="text-red-600">the idiot.</span>
           {:else}
             Am I <span class="text-red-600">The Idiot?</span>
@@ -365,4 +373,3 @@
     40%, 60% { transform: translate3d(4px, 0, 0); }
   }
 </style>
-// git test

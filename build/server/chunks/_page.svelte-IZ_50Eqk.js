@@ -1,6 +1,6 @@
 import { a as attr, b as ensure_array_like, e as escape_html, c as attr_class, s as stringify, d as attr_style, f as derived } from './dev-BLwf7WOh.js';
-import './client-7711REle.js';
-import './internal-D3XSU-rT.js';
+import './client-Ccf9GULc.js';
+import './internal-VHWd0RH5.js';
 import './chunk-BBx_TEkp.js';
 import './index-DBqjc0Yf.js';
 
@@ -75,7 +75,6 @@ function BackgroundCanvas($$renderer, $$props) {
 function _page($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		let { data } = $$props;
-		let isShameMode = derived(() => data.shameState?.failed && !data.shameState?.passed);
 		let step = data.step;
 		let activeQuiz = [];
 		let currentQuestionIndex = 0;
@@ -93,13 +92,8 @@ function _page($$renderer, $$props) {
 		if (step === "landing") {
 			$$renderer.push("<!--[0-->");
 			$$renderer.push(`<div class="space-y-6 text-center svelte-1uha8ag"><h1 class="text-6xl sm:text-7xl md:text-8xl font-black tracking-tighter text-white uppercase italic svelte-1uha8ag">`);
-			if (isShameMode()) {
-				$$renderer.push("<!--[0-->");
-				$$renderer.push(`I am <span class="text-red-600 svelte-1uha8ag">the idiot.</span>`);
-			} else {
-				$$renderer.push("<!--[-1-->");
-				$$renderer.push(`Am I <span class="text-red-600 svelte-1uha8ag">The Idiot?</span>`);
-			}
+			$$renderer.push("<!--[-1-->");
+			$$renderer.push(`Am I <span class="text-red-600 svelte-1uha8ag">The Idiot?</span>`);
 			$$renderer.push(`<!--]--></h1> <div class="relative group svelte-1uha8ag"><div class="absolute -inset-1 bg-gradient-to-r from-red-600 to-orange-600 rounded-2xl blur opacity-25 group-hover:opacity-50 transition duration-1000 group-hover:duration-200 svelte-1uha8ag"></div> <div class="relative space-y-3 text-base text-slate-400 text-left bg-slate-800/80 backdrop-blur p-6 rounded-2xl border border-slate-700/80 shadow-xl group-hover:border-red-600/50 transition-colors duration-500 svelte-1uha8ag"><p class="font-bold text-white text-xl group-hover:text-red-100 transition-colors duration-300 svelte-1uha8ag">The Shocking Truth About "Idiots"</p> <p class="svelte-1uha8ag">In ancient Greece, an <span class="text-white font-mono svelte-1uha8ag">"idios"</span> wasn't someone who was stupid. 
               It was a <span class="text-white font-bold svelte-1uha8ag">private citizen</span>—someone who chose to avoid the civic duties 
               of their community.</p> <p class="svelte-1uha8ag">To the Greeks, the real "idiot" was the person who thought they were above the responsibilities 
@@ -135,9 +129,9 @@ function _page($$renderer, $$props) {
 			}
 			$$renderer.push(`<!--]--></div></div> <button class="px-8 py-4 bg-slate-100 text-slate-900 font-black text-xl uppercase tracking-widest rounded-xl transition-all hover:bg-white svelte-1uha8ag">Try to be less of an idiot</button></div>`);
 		} else $$renderer.push("<!--[-1-->");
-		$$renderer.push(`<!--]--></div></div> // git test`);
+		$$renderer.push(`<!--]--></div></div>`);
 	});
 }
 
 export { _page as default };
-//# sourceMappingURL=_page.svelte-CI8ZQdCQ.js.map
+//# sourceMappingURL=_page.svelte-IZ_50Eqk.js.map
