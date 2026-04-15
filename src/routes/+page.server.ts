@@ -5,7 +5,7 @@ import type { Cookies } from '@sveltejs/kit';
 import type { Actions } from './$types';
 
 const SHAME_COOKIE = 'idiots_tracker';
-const PASS_THRESHOLD = 4; // Minimum score to pass (out of civicsQuiz.length)
+const PASS_THRESHOLD = 0.6; // Minimum percentage to pass
 
 function parseTracker(cookie: string | undefined): { failed: boolean; passed: boolean } {
   if (!cookie) return { failed: false, passed: false };
@@ -43,8 +43,9 @@ export const actions: Actions = {
     const data = await request.formData();
     const name = data.get('name') as string;
     const score = parseInt(data.get('score') as string);
+    const total = parseInt(data.get('total') as string);
 
-    if (!name || isNaN(score)) {
+    if (!name || isNaN(score) || isNaN(total) || total === 0) {
       return fail(400, { message: 'Invalid name or score' });
     }
 
@@ -56,7 +57,8 @@ export const actions: Actions = {
     // Update shame tracker cookie — only set once here, never in load()
     // Use httpOnly: false so client can read for the shame header swap
     const tracker = parseTracker(cookies.get(SHAME_COOKIE));
-    const passed = score >= PASS_THRESHOLD;
+    const percentage = score / total;
+    const passed = percentage >= PASS_THRESHOLD;
 
     const newTracker = {
       failed: tracker.passed ? false : (passed ? false : true),

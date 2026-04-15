@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { fade, fly } from 'svelte/transition';
   import { invalidateAll } from '$app/navigation';
   import { civicsQuiz, getFeedback, CONFIDENCE_CONFIG, getQuestionsForConfidence, type ConfidenceLevel, type Question } from '$lib/quiz';
   import { alerts } from '$lib/alerts.svelte';
@@ -40,6 +39,16 @@
   // Timer state
   let timeLeft = $state(0);
   let timerInterval: any;
+
+  // Cleanup timer on step change or component destroy — prevents interval leak on browser-back
+  $effect(() => {
+    if (step !== 'quiz') {
+      if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = undefined;
+      }
+    }
+  });
 
   function startTimer() {
     if (!confidenceLevel) return;
@@ -121,6 +130,7 @@
     const formData = new FormData();
     formData.append('name', userName);
     formData.append('score', score.toString());
+    formData.append('total', activeQuiz.length.toString());
     
     const response = await fetch('?/saveScore', {
       method: 'POST',
@@ -161,8 +171,8 @@
   <div class="max-w-2xl mx-auto w-full h-full flex flex-col py-6 md:py-8">
     
     {#if step === 'landing'}
-      <div in:fade class="space-y-4 md:space-y-6 text-center flex-1 flex flex-col justify-center">
-        <h1 in:fly={{ y: -20, duration: 600 }} class="text-5xl sm:text-6xl md:text-7xl font-black tracking-tighter text-white uppercase italic">
+      <div class="space-y-4 md:space-y-6 text-center flex-1 flex flex-col justify-center animate-fade-in">
+        <h1 class="text-5xl sm:text-6xl md:text-7xl font-black tracking-tighter text-white uppercase italic animate-fly-in-down">
           {#if showShameHeader}
             I am <span class="text-red-600">the idiot.</span>
           {:else}
@@ -170,7 +180,7 @@
           {/if}
         </h1>
         
-        <div in:fly={{ y: 20, duration: 600, delay: 100 }} class="relative group">
+        <div class="relative group animate-fade-in-up animation-delay-100">
           <div class="absolute -inset-1 bg-gradient-to-r from-red-600 to-orange-600 rounded-2xl blur opacity-25 group-hover:opacity-50 transition duration-1000 group-hover:duration-200"></div>
           <div class="relative space-y-3 text-base text-slate-400 text-left bg-slate-800/80 backdrop-blur p-6 rounded-2xl border border-slate-700/80 shadow-xl group-hover:border-red-600/50 transition-colors duration-500">
             <p class="font-bold text-white text-xl group-hover:text-red-100 transition-colors duration-300">The Shocking Truth About "Idiots"</p>
@@ -190,7 +200,7 @@
           </div>
         </div>
 
-        <div in:fly={{ y: 20, duration: 600, delay: 200 }} class="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-6 text-left">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-6 text-left animate-fade-in-up animation-delay-200">
           <div class="group relative p-4 md:p-6 bg-gradient-to-br from-red-900/30 to-red-950/50 border border-red-800/50 rounded-2xl cursor-pointer transition-all duration-500 hover:scale-105 hover:border-red-500/80 hover:shadow-2xl hover:shadow-red-900/40 hover:from-red-800/40 hover:to-red-950/60">
             <div class="absolute inset-0 bg-gradient-to-r from-red-600/0 via-red-600/5 to-red-600/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-2xl"></div>
             <div class="relative">
@@ -229,7 +239,7 @@
           </div>
         </div>
 
-        <div in:fly={{ y: 20, duration: 600, delay: 200 }} class="flex flex-col sm:flex-row items-center justify-center gap-3">
+        <div class="flex flex-col sm:flex-row items-center justify-center gap-3 animate-fade-in-up animation-delay-200">
           <input 
             type="text" 
             bind:value={userName} 
@@ -246,8 +256,8 @@
       </div>
 
     {:else if step === 'confidence'}
-      <div in:fade class="space-y-4 md:space-y-6 text-center flex-1 flex flex-col justify-center">
-        <h2 in:fly={{ y: -20 }} class="text-2xl md:text-4xl font-black uppercase italic text-white">
+      <div class="space-y-4 md:space-y-6 text-center flex-1 flex flex-col justify-center animate-fade-in">
+        <h2 class="text-2xl md:text-4xl font-black uppercase italic text-white animate-fly-in-down">
           How confident are you? <span class="text-red-600">Honestly.</span>
         </h2>
         
@@ -277,7 +287,7 @@
       </div>
 
     {:else if step === 'quiz'}
-      <div in:fade class="space-y-4 md:space-y-6 flex-1 flex flex-col min-h-0">
+      <div class="space-y-4 md:space-y-6 flex-1 flex flex-col min-h-0 animate-fade-in">
         <div class="flex justify-between items-center shrink-0">
           <div class="flex flex-col">
             <span class="text-slate-500 font-mono text-xs uppercase">Question</span>
@@ -321,7 +331,7 @@
           </div>
 
           {#if selectedOption !== null}
-            <div in:fade class="mt-4 p-4 bg-slate-900 rounded-xl border-l-4 border-red-600 shrink-0">
+            <div class="mt-4 p-4 bg-slate-900 rounded-xl border-l-4 border-red-600 shrink-0 animate-fade-in">
               <p class="text-slate-400 text-xs uppercase tracking-widest mb-1 font-bold">The Fact</p>
               <p class="text-slate-200 text-sm mb-4 italic leading-snug">"{activeQuiz[currentQuestionIndex].fact}"</p>
               <button 
@@ -371,22 +381,50 @@
 </div>
 
 <style>
-  .shake {
-    animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
-  }
-
-  .hide-scrollbar::-webkit-scrollbar {
-    display: none;
-  }
-  .hide-scrollbar {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
-  }
-
   @keyframes shake {
     10%, 90% { transform: translate3d(-1px, 0, 0); }
     20%, 80% { transform: translate3d(2px, 0, 0); }
     30%, 70% { transform: translate3d(-4px, 0, 0); }
     40%, 60% { transform: translate3d(4px, 0, 0); }
+  }
+
+  .shake {
+    animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
+  }
+
+  /* CSS replacement for Svelte transitions — no hydration risk */
+  @keyframes fade-in {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
+
+  @keyframes fly-in-down {
+    from { transform: translateY(-20px); opacity: 0; }
+    to   { transform: translateY(0);     opacity: 1; }
+  }
+
+  @keyframes fade-in-up {
+    from { transform: translateY(20px); opacity: 0; }
+    to   { transform: translateY(0);    opacity: 1; }
+  }
+
+  .animate-fade-in {
+    animation: fade-in 400ms ease-out both;
+  }
+
+  .animate-fly-in-down {
+    animation: fly-in-down 600ms ease-out both;
+  }
+
+  .animate-fade-in-up {
+    animation: fade-in-up 600ms ease-out both;
+  }
+
+  .animation-delay-100 {
+    animation-delay: 100ms;
+  }
+
+  .animation-delay-200 {
+    animation-delay: 200ms;
   }
 </style>
