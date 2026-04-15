@@ -293,19 +293,19 @@
             />
             <button
               onclick={startQuiz}
-              class=\"px-4 py-3 md:px-6 md:py-4 bg-gradient-to-r from-red-600 to-red-500 hover:from-red-500 hover:to-red-400 text-white font-black text-base md:text-lg uppercase tracking-widest rounded-xl transition-all transform hover:scale-105 active:scale-95 shadow-lg shadow-red-900/30 whitespace-nowrap hover:shadow-red-900/50\"
+              class="px-4 py-3 md:px-6 md:py-4 bg-gradient-to-r from-red-600 to-red-500 hover:from-red-500 hover:to-red-400 text-white font-black text-base md:text-lg uppercase tracking-widest rounded-xl transition-all transform hover:scale-105 active:scale-95 shadow-lg shadow-red-900/30 whitespace-nowrap hover:shadow-red-900/50"
             >
               Test My Intelligence
             </button>
             <button
               onclick={quickStart}
-              class=\"px-4 py-3 md:px-6 md:py-4 bg-slate-700 hover:bg-slate-600 text-slate-200 font-black text-base md:text-lg uppercase tracking-widest rounded-xl transition-all transform hover:scale-105 active:scale-95 shadow-lg shadow-black/30 whitespace-nowrap\"
+              class="px-4 py-3 md:px-6 md:py-4 bg-slate-700 hover:bg-slate-600 text-slate-200 font-black text-base md:text-lg uppercase tracking-widest rounded-xl transition-all transform hover:scale-105 active:scale-95 shadow-lg shadow-black/30 whitespace-nowrap"
             >
               Quick Play
             </button>
             <a
-              href=\"/auth/signin\"
-              class=\"text-slate-500 hover:text-red-400 text-xs uppercase tracking-widest transition-colors px-2 py-2 whitespace-nowrap\"
+              href="/auth/signin"
+              class="text-slate-500 hover:text-red-400 text-xs uppercase tracking-widest transition-colors px-2 py-2 whitespace-nowrap"
             >
               Sign in to save
             </a>
@@ -485,50 +485,9 @@
           </div>
         </div>
       </div>
-    {/if}{/if}
-
-        {#if dca}
-          <div class="bg-white text-slate-900 p-6 rounded-2xl border-4 border-slate-900 shadow-[8px_8px_0px_0px_rgba(220,38,38,1)] max-w-md mx-auto text-left">
-            <div class="flex items-center gap-3 mb-3">
-              <span class="text-2xl">{dca.icon}</span>
-              <h3 class="font-black uppercase italic text-sm tracking-widest">Your Next Step</h3>
-            </div>
-            <p class="font-bold text-lg mb-4">{dca.action}</p>
-            <a 
-              href={dca.actionUrl} 
-              target="_blank"
-              class="inline-block w-full text-center py-2 bg-slate-900 text-white font-bold rounded-lg hover:bg-slate-800 transition-colors"
-            >
-              Take Action
-            </a>
-          </div>
-        {/if}
-
-        <div class="bg-slate-800 p-6 md:p-8 rounded-3xl border border-slate-700 shadow-xl max-w-2xl mx-auto">
-          <h3 class="text-xl font-bold mb-6 uppercase tracking-tighter text-left">Wall of Shame & Glory</h3>
-          <div class="space-y-2">
-            {#each highScores as entry}
-              <div class="flex justify-between items-center p-3 bg-slate-900 rounded-lg border border-slate-700">
-                <span class="font-medium">{entry.name}</span>
-                <span class="font-mono font-bold {entry.score < 3 ? 'text-red-500' : 'text-green-500'}"> {entry.score}</span>
-              </div>
-            {/each}
-          </div>
-        </div>
-
-        <div class="flex flex-col sm:flex-row gap-3 justify-center items-center">
-          <button 
-            onclick={reset}
-            class="px-8 py-4 bg-slate-100 text-slate-900 font-black text-xl uppercase tracking-widest rounded-xl transition-all hover:bg-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:translate-y-1 active:shadow-none"
-          >
-            Try to be less of an idiot
-          </button>
-        </div>
-      </div>
-    {/if}{/if}
+    {/if}
   </div>
 </div>
-
 <style>
   @keyframes shake {
     10%, 90% { transform: translate3d(-1px, 0, 0); }
