@@ -10,11 +10,11 @@ return {
 	assets: new Set(["robots.txt"]),
 	mimeTypes: {".txt":"text/plain"},
 	_: {
-		client: {start:"_app/immutable/entry/start.WY37RbsM.js",app:"_app/immutable/entry/app.DKIp19Rt.js",imports:["_app/immutable/entry/start.WY37RbsM.js","_app/immutable/chunks/C_Ib3TXA.js","_app/immutable/chunks/B4-FXA9N.js","_app/immutable/entry/app.DKIp19Rt.js","_app/immutable/chunks/B4-FXA9N.js","_app/immutable/chunks/Dj6f-nJM.js","_app/immutable/chunks/DEDqjojZ.js"],stylesheets:[],fonts:[],uses_env_dynamic_public:false},
+		client: {start:"_app/immutable/entry/start.DqI0AU8F.js",app:"_app/immutable/entry/app.RqngY7ga.js",imports:["_app/immutable/entry/start.DqI0AU8F.js","_app/immutable/chunks/DOWBUdz0.js","_app/immutable/chunks/B4-FXA9N.js","_app/immutable/entry/app.RqngY7ga.js","_app/immutable/chunks/B4-FXA9N.js","_app/immutable/chunks/Dj6f-nJM.js","_app/immutable/chunks/DEDqjojZ.js"],stylesheets:[],fonts:[],uses_env_dynamic_public:false},
 		nodes: [
 			__memo(() => import('./chunks/0-B3v3vxhb.js')),
-			__memo(() => import('./chunks/1-D-Pd3QgN.js')),
-			__memo(() => import('./chunks/2-_nEl-cpy.js'))
+			__memo(() => import('./chunks/1-DLUnjlv2.js')),
+			__memo(() => import('./chunks/2-CW9y20LM.js'))
 		],
 		remotes: {
 			

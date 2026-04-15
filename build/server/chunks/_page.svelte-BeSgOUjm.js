@@ -1,6 +1,6 @@
 import { a as attr, b as ensure_array_like, e as escape_html, c as attr_class, s as stringify, d as attr_style, f as derived } from './dev-BLwf7WOh.js';
-import './client-DezLCfWJ.js';
-import './internal-DPqOUu5e.js';
+import './client-DM8th_vp.js';
+import './internal-Q207l3_7.js';
 import './chunk-BBx_TEkp.js';
 import './index-DBqjc0Yf.js';
 
@@ -10,21 +10,21 @@ var CONFIDENCE_CONFIG = {
 		label: "Humble",
 		questionCount: 5,
 		difficulty: "easy",
-		timeLimit: 30,
+		timeLimit: 5,
 		description: "I just want to learn. Be gentle."
 	},
 	confident: {
 		label: "Confident",
 		questionCount: 10,
 		difficulty: "medium",
-		timeLimit: 20,
+		timeLimit: 5,
 		description: "I know my stuff. Bring it on."
 	},
 	arrogant: {
 		label: "Arrogant",
 		questionCount: 15,
 		difficulty: "hard",
-		timeLimit: 10,
+		timeLimit: 5,
 		description: "I am a civic god. Challenge me."
 	}
 };
@@ -134,4 +134,4 @@ function _page($$renderer, $$props) {
 }
 
 export { _page as default };
-//# sourceMappingURL=_page.svelte-CnZ_XVrT.js.map
+//# sourceMappingURL=_page.svelte-BeSgOUjm.js.map

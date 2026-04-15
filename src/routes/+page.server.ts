@@ -2,6 +2,7 @@ import { fail } from '@sveltejs/kit';
 import { db } from '$lib/db';
 import { leaderboard } from '$lib/schema';
 import type { Cookies } from '@sveltejs/kit';
+import type { Actions } from './$types';
 
 const SHAME_COOKIE = 'idiots_tracker';
 const PASS_THRESHOLD = 4; // Minimum score to pass (out of civicsQuiz.length)
@@ -9,7 +10,7 @@ const PASS_THRESHOLD = 4; // Minimum score to pass (out of civicsQuiz.length)
 function parseTracker(cookie: string | undefined): { failed: boolean; passed: boolean } {
   if (!cookie) return { failed: false, passed: false };
   try {
-    const parsed = JSON.parse(decodeURIComponent(cookie));
+    const parsed = JSON.parse(cookie);
     return { failed: !!parsed.failed, passed: !!parsed.passed };
   } catch {
     return { failed: false, passed: false };
@@ -17,6 +18,12 @@ function parseTracker(cookie: string | undefined): { failed: boolean; passed: bo
 }
 
 export const load = async ({ cookies }: { cookies: Cookies }) => {
+  // Migration: clear any old double-encoded cookie
+  const oldCookie = cookies.get(SHAME_COOKIE);
+  if (oldCookie && oldCookie.startsWith('%25')) {
+    cookies.delete(SHAME_COOKIE, { path: '/' });
+  }
+
   const highScores = await db.query.leaderboard.findMany({
     orderBy: (leaderboard, { desc }) => [desc(leaderboard.score)],
     limit: 10,
@@ -31,7 +38,7 @@ export const load = async ({ cookies }: { cookies: Cookies }) => {
   };
 };
 
-export const actions = {
+export const actions: Actions = {
   saveScore: async ({ request, cookies }: { request: Request; cookies: Cookies }) => {
     const data = await request.formData();
     const name = data.get('name') as string;
@@ -46,22 +53,20 @@ export const actions = {
       score,
     });
 
-    // Update shame tracker cookie
+    // Update shame tracker cookie — only set once here, never in load()
+    // Use httpOnly: false so client can read for the shame header swap
     const tracker = parseTracker(cookies.get(SHAME_COOKIE));
     const passed = score >= PASS_THRESHOLD;
-    
-    // Build new tracker state:
-    // - Once passed, always passed (redeemed)
-    // - If never passed and now failing, mark as failed (shame mode)
+
     const newTracker = {
       failed: tracker.passed ? false : (passed ? false : true),
       passed: tracker.passed || passed
     };
 
-    cookies.set(SHAME_COOKIE, encodeURIComponent(JSON.stringify(newTracker)), {
+    cookies.set(SHAME_COOKIE, JSON.stringify(newTracker), {
       path: '/',
-      maxAge: 60 * 60 * 24 * 365, // 1 year
-      httpOnly: false, // Allow client-side reading for title logic
+      maxAge: 60 * 60 * 24 * 365,
+      httpOnly: false,
       sameSite: 'lax'
     });
 

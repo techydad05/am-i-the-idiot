@@ -13,8 +13,16 @@
   let showShameHeader = $state(false);
   
   $effect(() => {
-    // Set after mount and whenever shameState changes via invalidateAll()
-    showShameHeader = isShameMode;
+    // Sync from server data (invalidateAll updates) AND directly from cookie
+    // so shame header appears immediately when returning to landing via reset()
+    const cookie = document.cookie.match(/(?:^|;\s*)idiots_tracker=([^;]*)/)?.[1];
+    const fromCookie = cookie ? (() => {
+      try {
+        const parsed = JSON.parse(cookie);
+        return parsed.failed && !parsed.passed;
+      } catch { return false; }
+    })() : false;
+    showShameHeader = isShameMode || fromCookie;
   });
   
   let step = $state(data.step); // landing, confidence, quiz, result
@@ -127,7 +135,7 @@
     step = 'result';
   }
 
-  function reset() {
+  async function reset() {
     window.scrollTo({ top: 0, behavior: 'instant' });
     step = 'landing';
     currentQuestionIndex = 0;
@@ -139,6 +147,7 @@
     confidenceLevel = null;
     activeQuiz = [];
     if (timerInterval) clearInterval(timerInterval);
+    await invalidateAll();
   }
 </script>
 

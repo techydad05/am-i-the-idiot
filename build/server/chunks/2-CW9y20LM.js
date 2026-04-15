@@ -13,7 +13,7 @@ function parseTracker(cookie) {
 		passed: false
 	};
 	try {
-		const parsed = JSON.parse(decodeURIComponent(cookie));
+		const parsed = JSON.parse(cookie);
 		return {
 			failed: !!parsed.failed,
 			passed: !!parsed.passed
@@ -26,6 +26,8 @@ function parseTracker(cookie) {
 	}
 }
 var load = async ({ cookies }) => {
+	const oldCookie = cookies.get(SHAME_COOKIE);
+	if (oldCookie && oldCookie.startsWith("%25")) cookies.delete(SHAME_COOKIE, { path: "/" });
 	return {
 		highScores: await db.query.leaderboard.findMany({
 			orderBy: (leaderboard, { desc }) => [desc(leaderboard.score)],
@@ -50,7 +52,7 @@ var actions = { saveScore: async ({ request, cookies }) => {
 		failed: tracker.passed ? false : passed ? false : true,
 		passed: tracker.passed || passed
 	};
-	cookies.set(SHAME_COOKIE, encodeURIComponent(JSON.stringify(newTracker)), {
+	cookies.set(SHAME_COOKIE, JSON.stringify(newTracker), {
 		path: "/",
 		maxAge: 3600 * 24 * 365,
 		httpOnly: false,
@@ -67,11 +69,11 @@ var _page_server_ts = /*#__PURE__*/Object.freeze({
 
 const index = 2;
 let component_cache;
-const component = async () => component_cache ??= (await import('./_page.svelte-CnZ_XVrT.js')).default;
+const component = async () => component_cache ??= (await import('./_page.svelte-BeSgOUjm.js')).default;
 const server_id = "src/routes/+page.server.ts";
-const imports = ["_app/immutable/nodes/2.4aR1cJtb.js","_app/immutable/chunks/B4-FXA9N.js","_app/immutable/chunks/C_Ib3TXA.js","_app/immutable/chunks/DEDqjojZ.js"];
+const imports = ["_app/immutable/nodes/2.BkDC33M5.js","_app/immutable/chunks/B4-FXA9N.js","_app/immutable/chunks/DOWBUdz0.js","_app/immutable/chunks/DEDqjojZ.js"];
 const stylesheets = ["_app/immutable/assets/2.CBAwzRxl.css"];
 const fonts = [];
 
 export { component, fonts, imports, index, _page_server_ts as server, server_id, stylesheets };
-//# sourceMappingURL=2-_nEl-cpy.js.map
+//# sourceMappingURL=2-CW9y20LM.js.map
