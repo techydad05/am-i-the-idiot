@@ -6,15 +6,15 @@
   import BackgroundCanvas from '$lib/components/BackgroundCanvas.svelte';
 
   let { data } = $props();
-  
+
+  const session = $derived(data.session);
+  const user = $derived(session?.user);
+
   let isShameMode = $derived(data.shameState?.failed && !data.shameState?.passed);
-  // Sync shame header whenever shameState changes (invalidateAll() updates) or on fresh mount
   let showShameHeader = $state(false);
-  
+
   $effect(() => {
-    // Sync from server data (invalidateAll updates) AND directly from cookie
-    // so shame header appears immediately when returning to landing via reset()
-    const cookie = document.cookie.match(/(?:^|;\s*)idiots_tracker=([^;]*)/)?.[1];
+    const cookie = document.cookie.match(/(?:^|;\\s*)idiots_tracker=([^;]*)/)?.[1];
     const fromCookie = cookie ? (() => {
       try {
         const parsed = JSON.parse(cookie);
@@ -23,8 +23,8 @@
     })() : false;
     showShameHeader = isShameMode || fromCookie;
   });
-  
-  let step = $state(data.step); // landing, confidence, quiz, result
+
+  let step = $state(data.step);
   let confidenceLevel = $state<ConfidenceLevel | null>(null);
   let activeQuiz = $state<Question[]>([]);
   
@@ -167,8 +167,8 @@
 <BackgroundCanvas />
 <div class="fixed inset-0 bg-slate-900/40 backdrop-blur-[2px] -z-10"></div>
 
-<div class="h-dvh overflow-hidden flex justify-center items-center text-slate-100 font-sans selection:bg-red-500 selection:text-white p-3 md:p-8 relative z-10">
-  <div class="max-w-2xl mx-auto w-full h-full flex flex-col py-6 md:py-8">
+<div class="min-h-dvh overflow-hidden flex justify-center text-slate-100 font-sans selection:bg-red-500 selection:text-white p-3 md:p-8 relative z-10">
+  <div class="max-w-2xl mx-auto w-full flex flex-col py-6 md:py-8 flex-1 overflow-y-auto">
     
     {#if step === 'landing'}
       <div class="space-y-4 md:space-y-6 text-center flex-1 flex flex-col justify-center animate-fade-in">
@@ -240,18 +240,53 @@
         </div>
 
         <div class="flex flex-col sm:flex-row items-center justify-center gap-3 animate-fade-in-up animation-delay-200">
-          <input 
-            type="text" 
-            bind:value={userName} 
-            placeholder="Enter your real name..." 
-            class="w-full max-w-xs p-3 md:p-4 bg-slate-800/80 border-2 border-slate-700/80 rounded-xl text-white text-center focus:border-red-500 outline-none transition-all duration-300 hover:border-slate-600 focus:shadow-lg focus:shadow-red-900/20"
-          />
-          <button 
-            onclick={startQuiz}
-            class="px-4 py-3 md:px-6 md:py-4 bg-gradient-to-r from-red-600 to-red-500 hover:from-red-500 hover:to-red-400 text-white font-black text-base md:text-lg uppercase tracking-widest rounded-xl transition-all transform hover:scale-105 active:scale-95 shadow-lg shadow-red-900/30 whitespace-nowrap hover:shadow-red-900/50"
-          >
-            Test My Intelligence
-          </button>
+          {#if user}
+            <!-- Authenticated: show identity + sign out -->
+            <div class="flex items-center gap-3 bg-slate-800/80 border-2 border-slate-700/80 rounded-xl px-4 py-3">
+              {#if user.image}
+                <img src={user.image} alt={user.name ?? 'Avatar'} class="w-8 h-8 rounded-full" />
+              {:else}
+                <div class="w-8 h-8 rounded-full bg-red-600 flex items-center justify-center text-white font-bold text-sm">
+                  {(user.name ?? '?')[0].toUpperCase()}
+                </div>
+              {/if}
+              <span class="text-white font-medium text-sm hidden sm:block max-w-[120px] truncate">{user.name ?? 'Civic Learner'}</span>
+            </div>
+            <button
+              onclick={startQuiz}
+              class="px-4 py-3 md:px-6 md:py-4 bg-gradient-to-r from-red-600 to-red-500 hover:from-red-500 hover:to-red-400 text-white font-black text-base md:text-lg uppercase tracking-widest rounded-xl transition-all transform hover:scale-105 active:scale-95 shadow-lg shadow-red-900/30 whitespace-nowrap hover:shadow-red-900/50"
+            >
+              Test My Intelligence
+            </button>
+            <form method="POST" action="?/signout">
+              <button
+                type="submit"
+                class="text-slate-500 hover:text-red-400 text-xs uppercase tracking-widest transition-colors px-2 py-2"
+              >
+                Sign out
+              </button>
+            </form>
+          {:else}
+            <!-- Unauthenticated: name input + sign in prompt -->
+            <input
+              type="text"
+              bind:value={userName}
+              placeholder="Enter your real name..."
+              class="w-full max-w-xs p-3 md:p-4 bg-slate-800/80 border-2 border-slate-700/80 rounded-xl text-white text-center focus:border-red-500 outline-none transition-all duration-300 hover:border-slate-600 focus:shadow-lg focus:shadow-red-900/20"
+            />
+            <button
+              onclick={startQuiz}
+              class="px-4 py-3 md:px-6 md:py-4 bg-gradient-to-r from-red-600 to-red-500 hover:from-red-500 hover:to-red-400 text-white font-black text-base md:text-lg uppercase tracking-widest rounded-xl transition-all transform hover:scale-105 active:scale-95 shadow-lg shadow-red-900/30 whitespace-nowrap hover:shadow-red-900/50"
+            >
+              Test My Intelligence
+            </button>
+            <a
+              href="/auth/signin"
+              class="text-slate-500 hover:text-red-400 text-xs uppercase tracking-widest transition-colors px-2 py-2 whitespace-nowrap"
+            >
+              Sign in to save
+            </a>
+          {/if}
         </div>
       </div>
 

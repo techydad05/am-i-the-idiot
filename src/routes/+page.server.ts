@@ -1,8 +1,7 @@
 import { fail } from '@sveltejs/kit';
 import { db } from '$lib/db';
 import { leaderboard } from '$lib/schema';
-import type { Cookies } from '@sveltejs/kit';
-import type { Actions } from './$types';
+import type { Actions, PageServerLoad } from './$types';
 
 const SHAME_COOKIE = 'idiots_tracker';
 const PASS_THRESHOLD = 0.6; // Minimum percentage to pass
@@ -17,7 +16,7 @@ function parseTracker(cookie: string | undefined): { failed: boolean; passed: bo
   }
 }
 
-export const load = async ({ cookies }: { cookies: Cookies }) => {
+export const load: PageServerLoad = async ({ cookies }) => {
   // Migration: clear any old double-encoded cookie
   const oldCookie = cookies.get(SHAME_COOKIE);
   if (oldCookie && oldCookie.startsWith('%25')) {
@@ -39,7 +38,7 @@ export const load = async ({ cookies }: { cookies: Cookies }) => {
 };
 
 export const actions: Actions = {
-  saveScore: async ({ request, cookies }: { request: Request; cookies: Cookies }) => {
+  saveScore: async ({ request, cookies }) => {
     const data = await request.formData();
     const name = data.get('name') as string;
     const score = parseInt(data.get('score') as string);
@@ -72,6 +71,15 @@ export const actions: Actions = {
       sameSite: 'lax'
     });
 
+    return { success: true };
+  },
+
+  signOut: async ({ locals }) => {
+    const session = await locals.auth();
+    if (session?.user) {
+      const { signOut } = await import('$lib/server/auth');
+      await signOut({ redirectTo: '/' });
+    }
     return { success: true };
   }
 };

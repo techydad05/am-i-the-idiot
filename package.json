@@ -33,6 +33,9 @@
 		"vite": "^8.0.7"
 	},
 	"dependencies": {
+		"@auth/core": "^0.41.2",
+		"@auth/drizzle-adapter": "^1.11.2",
+		"@auth/sveltekit": "^1.11.2",
 		"@sveltejs/adapter-node": "^5.5.4",
 		"better-sqlite3": "^12.8.0"
 	}
