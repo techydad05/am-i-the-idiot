@@ -112,8 +112,13 @@
     });
   }
 
-  function handleMouseMove(e: MouseEvent) {
+  function handleMouseMove(e: PointerEvent) {
     const rect = canvasDiv.getBoundingClientRect();
+    
+    // On touch devices, only update mouse position when the pointer is pressed.
+    // This prevents the background from reacting to page scrolls.
+    if ('ontouchstart' in window && e.buttons === 0) return;
+    
     mouse.x = e.clientX - rect.left;
     mouse.y = e.clientY - rect.top;
   }
@@ -121,10 +126,10 @@
   let canvasDiv: HTMLDivElement;
 
   onMount(() => {
-    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('pointermove', handleMouseMove);
     const interval = setInterval(updateParticles, 16);
     return () => {
-      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('pointermove', handleMouseMove);
       clearInterval(interval);
     };
   });
